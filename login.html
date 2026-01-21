@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>BDG GAME - Login</title>
+    <style>
+        /* डिज़ाइन को फोटो से मैच करने के लिए विस्तार से लिखा गया CSS */
+        body { margin: 0; padding: 0; background-color: #1a1a1a; color: white; font-family: 'Segoe UI', sans-serif; height: 100vh; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 500px; background: #222222; display: flex; flex-direction: column; min-height: 100vh; overflow-y: auto; }
+        
+        /* Top Navigation */
+        .header { display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; background: #2a2a2a; border-bottom: 1px solid #333; }
+        .back { font-size: 26px; color: #ccc; cursor: pointer; }
+        .logo { color: #d4af37; font-weight: bold; font-size: 22px; text-decoration: underline; text-underline-offset: 6px; }
+        .lang { color: #d4af37; font-size: 14px; font-weight: bold; display: flex; align-items: center; gap: 4px; }
+
+        /* Welcome Text */
+        .welcome-sec { padding: 25px 20px 10px 20px; }
+        .main-h { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
+        .sub-h { color: #888; font-size: 13px; line-height: 1.6; }
+
+        /* Login Mode Selection Tabs */
+        .tabs { display: flex; margin-top: 30px; border-bottom: 1px solid #333; }
+        .tab { flex: 1; display: flex; flex-direction: column; align-items: center; padding-bottom: 15px; cursor: pointer; color: #888; border-bottom: 3px solid transparent; transition: 0.3s; }
+        .tab.active { color: #d4af37; border-bottom: 3px solid #d4af37; }
+        .tab-icon { font-size: 26px; margin-bottom: 8px; }
+        .tab-label { font-size: 14px; font-weight: 500; }
+
+        /* Form Area */
+        .form { padding: 25px; flex-grow: 1; }
+        .input-group { margin-bottom: 25px; }
+        .label { display: flex; align-items: center; gap: 10px; color: #f3d078; font-size: 16px; font-weight: bold; margin-bottom: 15px; }
+        
+        /* Input Field Styling */
+        .row { display: flex; gap: 12px; }
+        .code-box { background: #333; border: 1px solid #444; border-radius: 12px; padding: 16px; display: flex; align-items: center; gap: 8px; min-width: 80px; justify-content: center; font-size: 15px; }
+        
+        .box-wrap { flex: 1; position: relative; }
+        input { width: 100%; background: #333; border: 1px solid #444; border-radius: 12px; padding: 18px; color: white; font-size: 15px; box-sizing: border-box; outline: none; transition: 0.2s; }
+        input:focus { border-color: #d4af37; }
+        .eye { position: absolute; right: 18px; top: 18px; color: #777; font-size: 20px; cursor: pointer; }
+
+        /* Options */
+        .options { display: flex; align-items: center; gap: 10px; margin-top: 15px; }
+        .check { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #d4af37; background: #d4af37; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #222; font-weight: bold; }
+        .opt-txt { font-size: 14px; color: #888; }
+
+        /* Action Buttons */
+        .btn-sec { margin-top: 45px; display: flex; flex-direction: column; gap: 18px; }
+        .login-btn { width: 100%; padding: 18px; background: #4a4a4a; border: none; border-radius: 40px; color: #aaa; font-weight: bold; font-size: 18px; cursor: not-allowed; transition: 0.3s; }
+        .reg-btn-out { width: 100%; padding: 15px; background: transparent; border: 1px solid #d4af37; border-radius: 40px; color: #d4af37; font-weight: bold; font-size: 16px; cursor: pointer; }
+
+        /* Support Links */
+        .footer-support { display: flex; justify-content: space-around; margin-top: 60px; padding-bottom: 40px; }
+        .sup-box { display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; }
+        .icon-circ { width: 55px; height: 55px; border: 2px solid #d4af37; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 28px; color: #d4af37; }
+        .sup-txt { font-size: 13px; color: #aaa; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <span class="back" onclick="history.back()">‹</span>
+            <span class="logo">BDG GAME</span>
+            <div class="lang">🇺🇸 EN</div>
+        </div>
+
+        <div class="welcome-sec">
+            <div class="main-h">Log in</div>
+            <div class="sub-h">
+                Please log in with your phone number or email<br>
+                If you forget your password, please contact customer service
+            </div>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active">
+                <span class="tab-icon">📱</span>
+                <span class="tab-label">phone number</span>
+            </div>
+            <div class="tab">
+                <span class="tab-icon">✉️</span>
+                <span class="tab-label">Email / Account</span>
+            </div>
+        </div>
+
+        <div class="form">
+            
+            <div class="input-group">
+                <div class="label">📱 Phone number</div>
+                <div class="row">
+                    <div class="code-box">+91 ⌄</div>
+                    <div class="box-wrap">
+                        <input type="tel" id="l_phone" placeholder="Please enter the phone number" oninput="checkInputs()">
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <div class="label">🔒 Password</div>
+                <div class="box-wrap">
+                    <input type="password" id="l_pass" placeholder="Password" oninput="checkInputs()">
+                    <span class="eye">👁️</span>
+                </div>
+            </div>
+
+            <div class="options">
+                <div class="check">✓</div>
+                <span class="opt-txt">Remember password</span>
+            </div>
+
+            <div class="btn-sec">
+                <button id="l_btn" class="login-btn" onclick="submitLogin()">Log in</button>
+                <button class="reg-btn-out" onclick="window.location.href='register.html'">Register</button>
+            </div>
+
+            <div class="footer-support">
+                <div class="sup-box">
+                    <div class="icon-circ">🔒</div>
+                    <span class="sup-txt">Forgot password</span>
+                </div>
+                <div class="sup-box">
+                    <div class="icon-circ">🎧</div>
+                    <span class="sup-txt">Customer Service</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // बटन को एक्टिवेट करने का स्मार्ट लॉजिक
+        function checkInputs() {
+            const ph = document.getElementById('l_phone').value;
+            const ps = document.getElementById('l_pass').value;
+            const btn = document.getElementById('l_btn');
+            
+            if(ph.length >= 10 && ps.length >= 4) {
+                btn.style.background = 'linear-gradient(180deg, #f3d078 0%, #d4af37 100%)';
+                btn.style.color = '#3d2a00';
+                btn.style.cursor = 'pointer';
+            } else {
+                btn.style.background = '#4a4a4a';
+                btn.style.color = '#aaa';
+                btn.style.cursor = 'not-allowed';
+            }
+        }
+
+        async function submitLogin() {
+            const phone = document.getElementById('l_phone').value;
+            const password = document.getElementById('l_pass').value;
+
+            const res = await fetch('/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ phone, password })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                localStorage.setItem('user_id', data.userId);
+                localStorage.setItem('user_balance', data.balance);
+                window.location.href = 'index.html';
+            } else {
+                alert(data.message);
+            }
+        }
+    </script>
+</body>
+</html>
