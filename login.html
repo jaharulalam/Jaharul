@@ -143,9 +143,8 @@
             btn.disabled = true;
 
             try {
-                // RENDER KA LINK HATA DIYA HAI
-                // Ab ye Vercel par seedha '/' endpoint use karega
-                const res = await fetch('/login', {
+                // MAINE YAHA POORA VERCEL URL DAAL DIYA HAI
+                const res = await fetch('https://jaharul.vercel.app/api/login', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ phone, password })
