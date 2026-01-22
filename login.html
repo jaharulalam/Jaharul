@@ -169,8 +169,8 @@
             btn.disabled = true;
 
             try {
-                // Render और Local दोनों के लिए डायनामिक URL
-                const apiUrl = `${window.location.origin}/login`;
+                // RENDER CONNECTION JOID DIYA HAI
+                const apiUrl = `https://jaharul.onrender.com/login`;
                 
                 const res = await fetch(apiUrl, {
                     method: 'POST',
@@ -191,7 +191,7 @@
                 }
             } catch (error) {
                 console.error("Error:", error);
-                alert("Server is not responding. Please check your connection.");
+                alert("Server is not responding. Please wait 30 seconds for Render to wake up.");
                 btn.innerText = "Log in";
                 btn.disabled = false;
             }
@@ -199,3 +199,4 @@
     </script>
 </body>
 </html>
+
