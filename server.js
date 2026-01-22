@@ -1,33 +1,30 @@
 const express = require('express'); 
 const fs = require('fs');
 const path = require('path');
-const cors = require('cors'); // CORS को अलग से डिफाइन करना बेहतर है
+const cors = require('cors'); 
 const app = express();
 
-// बदलाव 1: Render के लिए पोर्ट को डायनामिक बनाया (Port Fix)
+// Render ke liye Port setup
 const PORT = process.env.PORT || 3000;
 
-const FOLDER_PATH = __dirname;
-const DATA_FILE = path.join(FOLDER_PATH, 'users_db.json');
+const DATA_FILE = path.join(__dirname, 'users_db.json');
 const ADMIN_INVITE_CODE = "BDG100"; 
 
+// Badlav: CORS ko thoda open kiya taaki GitHub se request block na ho
+app.use(cors()); 
 app.use(express.json());
-app.use(cors()); // सभी ओरिजिन से रिक्वेस्ट स्वीकार करने के लिए
 
-// स्टेटिक फाइल्स (HTML, CSS, JS) को सर्व करने के लिए
-app.use(express.static(FOLDER_PATH));
+// Pehle check karein ki DB file hai ya nahi
+if (!fs.existsSync(DATA_FILE)) {
+    fs.writeFileSync(DATA_FILE, JSON.stringify({}));
+}
 
-// डेटाबेस फंक्शन
+// Database functions
 const getDB = () => {
     try {
-        if (!fs.existsSync(DATA_FILE)) {
-            fs.writeFileSync(DATA_FILE, JSON.stringify({}));
-            return {};
-        }
         const data = fs.readFileSync(DATA_FILE, 'utf8');
         return data ? JSON.parse(data) : {};
     } catch (err) {
-        console.error("DB Read Error:", err);
         return {};
     }
 };
@@ -36,17 +33,17 @@ const saveDB = (data) => fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 
 
 // --- API Routes ---
 
-// लॉगिन रूट (इसे मैंने और सुरक्षित और स्थिर बनाया है)
+// Default Route (Check karne ke liye ki server chal raha hai)
+app.get('/', (req, res) => {
+    res.send("Server is Running Live on Render!");
+});
+
+// लॉगिन रूट
 app.post('/login', (req, res) => {
     try {
         const { phone, password } = req.body;
-        if (!phone || !password) {
-            return res.status(400).json({ success: false, message: "Missing phone or password" });
-        }
-
         let db = getDB();
         if (db[phone] && db[phone].password === password) {
-            console.log(`✅ Login Success: ${phone}`);
             res.json({ 
                 success: true, 
                 userId: phone, 
@@ -56,8 +53,7 @@ app.post('/login', (req, res) => {
             res.status(401).json({ success: false, message: "Wrong Phone or Password" });
         }
     } catch (error) {
-        console.error("Login Route Error:", error);
-        res.status(500).json({ success: false, message: "Internal Server Error" });
+        res.status(500).json({ success: false, message: "Server Error" });
     }
 });
 
@@ -77,15 +73,12 @@ app.post('/register', (req, res) => {
 app.post('/save-upi', (req, res) => {
     const { name, phone, upi } = req.body;
     const adminData = `Time: ${new Date().toLocaleString()} | Name: ${name} | Phone: ${phone} | UPI ID: ${upi}\n`;
-    const listPath = path.join(FOLDER_PATH, 'admin_upi_list.txt');
+    const listPath = path.join(__dirname, 'admin_upi_list.txt');
     fs.appendFileSync(listPath, adminData);
     res.json({ success: true });
 });
 
-// सर्वर चालू करना
+// सर्वर चालू करना (Render ke liye 0.0.0.0 zaroori hai)
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`========================================`);
-    console.log(`✅ सर्वर चालू है! पोर्ट: ${PORT}`);
-    console.log(`🌐 यूआरएल: http://localhost:${PORT}`);
-    console.log(`========================================`);
+    console.log(`✅ Server started on port ${PORT}`);
 });
