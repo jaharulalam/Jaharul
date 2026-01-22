@@ -1,126 +1,155 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>BDG GAME - Home</title>
+    <title>BDG GAME - Login</title>
     <style>
-        body { margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #1a1a1a; color: white; overflow-x: hidden; }
-        
-        /* Header */
-        .header { display: flex; justify-content: space-between; align-items: center; padding: 15px; background-color: #222; }
-        .logo { color: #d4af37; font-weight: bold; font-size: 20px; }
-        .customer-service { background-color: #d4af37; color: #000; padding: 5px 15px; border-radius: 20px; font-size: 12px; font-weight: bold; }
-        
-        /* User Bar */
-        .user-bar { background-color: #333; margin: 10px; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; border-left: 4px solid #d4af37; font-size: 14px; }
-        
-        /* Lottery Section */
-        .game-container { display: flex; gap: 15px; padding: 15px; justify-content: space-around; }
-        .game-card { background: linear-gradient(to bottom, #f3d078, #d4af37); width: 45%; border-radius: 15px; padding: 20px 10px; text-align: center; cursor: pointer; transition: 0.3s; }
-        .game-card:active { transform: scale(0.95); }
-        .game-title { font-weight: bold; font-size: 18px; margin-top: 10px; color: #fff; text-shadow: 1px 1px 2px #000; }
-
-        /* Bottom Navigation */
-        .bottom-nav { 
-            position: fixed; 
-            bottom: 0; 
-            width: 100%; 
-            max-width: 500px; 
-            background-color: #222; 
-            display: flex; 
-            justify-content: space-around; 
-            padding: 8px 0; 
-            border-top: 1px solid #333; 
-            z-index: 1000;
-        }
-        
-        .nav-item { 
-            text-align: center; 
-            text-decoration: none; 
-            color: #888; 
-            font-size: 12px; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            flex: 1;
-        }
-        
-        .nav-item.active { color: #d4af37; }
-        .nav-icon { font-size: 24px; margin-bottom: 2px; }
-
-        /* Content Spacing */
-        .main-content { padding-bottom: 80px; }
+        body { margin: 0; padding: 0; background-color: #1a1a1a; color: white; font-family: 'Segoe UI', sans-serif; height: 100vh; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 500px; background: #222222; display: flex; flex-direction: column; min-height: 100vh; overflow-y: auto; }
+        .header { display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; background: #2a2a2a; border-bottom: 1px solid #333; }
+        .back { font-size: 26px; color: #ccc; cursor: pointer; }
+        .logo { color: #d4af37; font-weight: bold; font-size: 22px; text-decoration: underline; text-underline-offset: 6px; }
+        .lang { color: #d4af37; font-size: 14px; font-weight: bold; display: flex; align-items: center; gap: 4px; }
+        .welcome-sec { padding: 25px 20px 10px 20px; }
+        .main-h { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
+        .sub-h { color: #888; font-size: 13px; line-height: 1.6; }
+        .tabs { display: flex; margin-top: 30px; border-bottom: 1px solid #333; }
+        .tab { flex: 1; display: flex; flex-direction: column; align-items: center; padding-bottom: 15px; cursor: pointer; color: #888; border-bottom: 3px solid transparent; transition: 0.3s; }
+        .tab.active { color: #d4af37; border-bottom: 3px solid #d4af37; }
+        .tab-icon { font-size: 26px; margin-bottom: 8px; }
+        .tab-label { font-size: 14px; font-weight: 500; }
+        .form { padding: 25px; flex-grow: 1; }
+        .input-group { margin-bottom: 25px; }
+        .label { display: flex; align-items: center; gap: 10px; color: #f3d078; font-size: 16px; font-weight: bold; margin-bottom: 15px; }
+        .row { display: flex; gap: 12px; }
+        .code-box { background: #333; border: 1px solid #444; border-radius: 12px; padding: 16px; display: flex; align-items: center; gap: 8px; min-width: 80px; justify-content: center; font-size: 15px; }
+        .box-wrap { flex: 1; position: relative; }
+        input { width: 100%; background: #333; border: 1px solid #444; border-radius: 12px; padding: 18px; color: white; font-size: 15px; box-sizing: border-box; outline: none; transition: 0.2s; }
+        input:focus { border-color: #d4af37; }
+        .eye { position: absolute; right: 18px; top: 18px; color: #777; font-size: 20px; cursor: pointer; }
+        .options { display: flex; align-items: center; gap: 10px; margin-top: 15px; }
+        .check { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #d4af37; background: #d4af37; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #222; font-weight: bold; }
+        .opt-txt { font-size: 14px; color: #888; }
+        .btn-sec { margin-top: 45px; display: flex; flex-direction: column; gap: 18px; }
+        .login-btn { width: 100%; padding: 18px; background: #4a4a4a; border: none; border-radius: 40px; color: #aaa; font-weight: bold; font-size: 18px; cursor: not-allowed; transition: 0.3s; }
+        .reg-btn-out { width: 100%; padding: 15px; background: transparent; border: 1px solid #d4af37; border-radius: 40px; color: #d4af37; font-weight: bold; font-size: 16px; cursor: pointer; }
+        .footer-support { display: flex; justify-content: space-around; margin-top: 60px; padding-bottom: 40px; }
+        .sup-box { display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; }
+        .icon-circ { width: 55px; height: 55px; border: 2px solid #d4af37; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 28px; color: #d4af37; }
+        .sup-txt { font-size: 13px; color: #aaa; }
     </style>
 </head>
 <body>
 
-    <div class="main-content">
+    <div class="container">
         <div class="header">
-            <div class="logo">BDG GAME</div>
-            <div class="customer-service">🎧 Customer Service</div>
+            <span class="back" onclick="history.back()">‹</span>
+            <span class="logo">BDG GAME</span>
+            <div class="lang">🇺🇸 EN</div>
         </div>
 
-        <div class="user-bar">
-            <span>👤 ID: <span id="u_id">Loading...</span> - ₹<span id="u_bal">0.00</span> <span onclick="location.reload()" style="cursor:pointer">🔄</span></span>
-            <span onclick="logout()" style="cursor:pointer">✉️</span>
-        </div>
-
-        <h3 style="padding-left: 15px; color: #d4af37; border-left: 4px solid #d4af37; margin: 20px 0 10px 15px;">Lottery</h3>
-        
-        <div class="game-container">
-            <div class="game-card" onclick="window.location.href='wingo_game.html'">
-                <div style="font-size: 50px;">🚗</div>
-                <div class="game-title">Wingo</div>
-            </div>
-            <div class="game-card" onclick="alert('TRX Coming Soon!')">
-                <div style="font-size: 50px;">🏎️</div>
-                <div class="game-title">TRX Wingo</div>
+        <div class="welcome-sec">
+            <div class="main-h">Log in</div>
+            <div class="sub-h">
+                Please log in with your phone number or email<br>
+                If you forget your password, please contact customer service
             </div>
         </div>
-    </div>
 
-    <div class="bottom-nav">
-        <a href="index.html" class="nav-item active">
-            <span class="nav-icon">🏠</span>
-            <span>Home</span>
-        </a>
-        <a href="#" class="nav-item">
-            <span class="nav-icon">🎁</span>
-            <span>Activity</span>
-        </a>
-        <a href="#" class="nav-item">
-            <span class="nav-icon">📢</span>
-            <span>Promotion</span>
-        </a>
-        <a href="account.html" class="nav-item">
-            <span class="nav-icon">👤</span>
-            <span>Account</span>
-        </a>
+        <div class="tabs">
+            <div class="tab active">
+                <span class="tab-icon">📱</span>
+                <span class="tab-label">phone number</span>
+            </div>
+            <div class="tab">
+                <span class="tab-icon">✉️</span>
+                <span class="tab-label">Email / Account</span>
+            </div>
+        </div>
+
+        <div class="form">
+            <div class="input-group">
+                <div class="label">📱 Phone number</div>
+                <div class="row">
+                    <div class="code-box">+91 ⌄</div>
+                    <div class="box-wrap">
+                        <input type="tel" id="l_phone" placeholder="Please enter the phone number" oninput="checkInputs()">
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <div class="label">🔒 Password</div>
+                <div class="box-wrap">
+                    <input type="password" id="l_pass" placeholder="Password" oninput="checkInputs()">
+                    <span class="eye" onclick="togglePass()">👁️</span>
+                </div>
+            </div>
+
+            <div class="options">
+                <div class="check">✓</div>
+                <span class="opt-txt">Remember password</span>
+            </div>
+
+            <div class="btn-sec">
+                <button id="l_btn" class="login-btn" onclick="submitLogin()">Log in</button>
+                <button class="reg-btn-out" onclick="window.location.href='register.html'">Register</button>
+            </div>
+
+            <div class="footer-support">
+                <div class="sup-box">
+                    <div class="icon-circ" onclick="alert('Contact Customer Support for Password Reset')">🔒</div>
+                    <span class="sup-txt">Forgot password</span>
+                </div>
+                <div class="sup-box">
+                    <div class="icon-circ" onclick="alert('Redirecting to Support...')">🎧</div>
+                    <span class="sup-txt">Customer Service</span>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
-        // Yeh function login check karta hai
-        function checkAuth() {
-            const uid = localStorage.getItem('user_id');
-            const bal = localStorage.getItem('user_balance');
-
-            // Agar koi login nahi hai (null/undefined), tabhi login.html pe bhejega
-            if (!uid || uid === "null" || uid === "undefined") { 
-                window.location.replace('login.html'); 
+        function checkInputs() {
+            const ph = document.getElementById('l_phone').value;
+            const ps = document.getElementById('l_pass').value;
+            const btn = document.getElementById('l_btn');
+            
+            if(ph.length >= 10 && ps.length >= 4) {
+                btn.style.background = 'linear-gradient(180deg, #f3d078 0%, #d4af37 100%)';
+                btn.style.color = '#3d2a00';
+                btn.style.cursor = 'pointer';
+                btn.disabled = false;
             } else {
-                // Agar login hai, toh ID aur Balance screen pe dikhayega
-                document.getElementById('u_id').innerText = uid;
-                document.getElementById('u_bal').innerText = parseFloat(bal || 0).toFixed(2);
+                btn.style.background = '#4a4a4a';
+                btn.style.color = '#aaa';
+                btn.style.cursor = 'not-allowed';
+                btn.disabled = true;
             }
         }
 
-        // Page load hote hi check karo
-        window.onload = checkAuth;
+        function togglePass() {
+            const passInput = document.getElementById('l_pass');
+            passInput.type = passInput.type === "password" ? "text" : "password";
+        }
 
-        function logout() {
-            localStorage.clear();
-            window.location.replace('login.html');
+        function submitLogin() {
+            const phone = document.getElementById('l_phone').value;
+            const btn = document.getElementById('l_btn');
+
+            btn.innerText = "Logging in...";
+            btn.disabled = true;
+
+            // Turant login logic: Data ko localStorage mein save karein
+            localStorage.setItem('user_id', phone); // Phone number ko hi ID bana diya
+            localStorage.setItem('user_balance', '50.00'); // Default balance set kiya
+            
+            // Bina kisi server delay ke index.html par bhejein
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 500); // 0.5 second ka delay real feel dene ke liye
         }
     </script>
 </body>
