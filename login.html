@@ -102,7 +102,7 @@
                 <div class="label">🔒 Password</div>
                 <div class="box-wrap">
                     <input type="password" id="l_pass" placeholder="Password" oninput="checkInputs()">
-                    <span class="eye">👁️</span>
+                    <span class="eye" onclick="togglePass()">👁️</span>
                 </div>
             </div>
 
@@ -118,11 +118,11 @@
 
             <div class="footer-support">
                 <div class="sup-box">
-                    <div class="icon-circ">🔒</div>
+                    <div class="icon-circ" onclick="alert('Contact Customer Support for Password Reset')">🔒</div>
                     <span class="sup-txt">Forgot password</span>
                 </div>
                 <div class="sup-box">
-                    <div class="icon-circ">🎧</div>
+                    <div class="icon-circ" onclick="alert('Redirecting to Support...')">🎧</div>
                     <span class="sup-txt">Customer Service</span>
                 </div>
             </div>
@@ -140,30 +140,60 @@
                 btn.style.background = 'linear-gradient(180deg, #f3d078 0%, #d4af37 100%)';
                 btn.style.color = '#3d2a00';
                 btn.style.cursor = 'pointer';
+                btn.disabled = false;
             } else {
                 btn.style.background = '#4a4a4a';
                 btn.style.color = '#aaa';
                 btn.style.cursor = 'not-allowed';
+                btn.disabled = true;
+            }
+        }
+
+        // पासवर्ड दिखाने या छुपाने के लिए
+        function togglePass() {
+            const passInput = document.getElementById('l_pass');
+            if (passInput.type === "password") {
+                passInput.type = "text";
+            } else {
+                passInput.type = "password";
             }
         }
 
         async function submitLogin() {
             const phone = document.getElementById('l_phone').value;
             const password = document.getElementById('l_pass').value;
+            const btn = document.getElementById('l_btn');
 
-            const res = await fetch('/login', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ phone, password })
-            });
-            const data = await res.json();
+            // लॉगिन के दौरान बटन को डिसेबल करें
+            btn.innerText = "Logging in...";
+            btn.disabled = true;
 
-            if (data.success) {
-                localStorage.setItem('user_id', data.userId);
-                localStorage.setItem('user_balance', data.balance);
-                window.location.href = 'index.html';
-            } else {
-                alert(data.message);
+            try {
+                // Render और Local दोनों के लिए डायनामिक URL
+                const apiUrl = `${window.location.origin}/login`;
+                
+                const res = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ phone, password })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    localStorage.setItem('user_id', data.userId);
+                    localStorage.setItem('user_balance', data.balance);
+                    window.location.href = 'index.html';
+                } else {
+                    alert(data.message || "Invalid Login Details");
+                    btn.innerText = "Log in";
+                    btn.disabled = false;
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Server is not responding. Please check your connection.");
+                btn.innerText = "Log in";
+                btn.disabled = false;
             }
         }
     </script>
