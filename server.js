@@ -1,74 +1,57 @@
 const express = require('express');
-const fs = require('fs');
-const path = require('path');
+const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path');
 
 const app = express();
-// Vercel automatically port handle karta hai
-const PORT = process.env.PORT || 3000;
-const DATA_FILE = path.join('/tmp', 'users_db.json'); // Vercel par temporary storage use karni padti hai
-const ADMIN_INVITE_CODE = "BDG100";
-
-app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, './'))); // HTML files serve karne ke liye
+app.use(cors());
 
-// Database Initialization
-if (!fs.existsSync(DATA_FILE)) {
-    fs.writeFileSync(DATA_FILE, JSON.stringify({}, null, 2));
-}
+// --- DATABASE CONNECTION (Aapke password ke saath) ---
+const mongoURI = "mongodb+srv://alluserdatabase:alluserdatabase@cluster0.wudrz8f.mongodb.net/bdgGame?retryWrites=true&w=majority"; 
 
-const getDB = () => {
-    try {
-        if (!fs.existsSync(DATA_FILE)) return {};
-        const data = fs.readFileSync(DATA_FILE, 'utf8');
-        return data.trim() ? JSON.parse(data) : {};
-    } catch (err) {
-        return {};
-    }
-};
+mongoose.connect(mongoURI)
+    .then(() => console.log("MongoDB Connected Successfully!"))
+    .catch(err => console.log("MongoDB Connection Error:", err));
 
-const saveDB = (data) => {
-    try {
-        fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
-        return true;
-    } catch (err) {
-        return false;
-    }
-};
-
-// Routes
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+// User Schema (Database mein data save karne ke liye)
+const userSchema = new mongoose.Schema({
+    phone: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    balance: { type: Number, default: 0 }
 });
 
-app.post('/login', (req, res) => {
+const User = mongoose.model('User', userSchema);
+
+// Registration API
+app.post('/api/register', async (req, res) => {
+    try {
+        const { phone, password } = req.body;
+        const newUser = new User({ phone, password });
+        await newUser.save();
+        res.json({ success: true, message: "Account Created!" });
+    } catch (err) {
+        res.status(400).json({ success: false, message: "Phone number already exists!" });
+    }
+});
+
+// Login API
+app.post('/api/login', async (req, res) => {
     const { phone, password } = req.body;
-    const db = getDB();
-    if (db[phone] && db[phone].password === password) {
-        res.json({ success: true, userId: phone, balance: db[phone].balance || 0 });
+    const user = await User.findOne({ phone, password });
+    if (user) {
+        res.json({ success: true, balance: user.balance });
     } else {
-        res.status(401).json({ success: false, message: "Invalid Credentials" });
+        res.status(401).json({ success: false, message: "Invalid Details!" });
     }
 });
 
-app.post('/register', (req, res) => {
-    const { phone, password, inviteCode } = req.body;
-    let db = getDB();
-    if (db[phone]) return res.json({ success: false, message: "User already exists!" });
-    
-    let bonus = (inviteCode === ADMIN_INVITE_CODE) ? 100.00 : 0.00;
-    db[phone] = { password: password, balance: bonus, history: [] };
+// Frontend Files Serving
+app.use(express.static(path.join(__dirname, 'public')));
 
-    if (saveDB(db)) {
-        res.json({ success: true, userId: phone, balance: bonus });
-    } else {
-        res.status(500).json({ success: false, message: "Server Write Error" });
-    }
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
-
-module.exports = app; // Vercel ke liye zaroori hai
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
