@@ -1,52 +1,70 @@
+require('dotenv').config();
 const express = require('express');
-const { MongoClient } = require('mongodb');
+const mongoose = require('mongoose');
+const http = require('http');
+const { Server } = require('socket.io');
 const cors = require('cors');
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, { cors: { origin: "*" } });
+
 app.use(express.json());
 app.use(cors());
 
-// ================== अपना Connection String यहाँ डालो ==================
-const uri = "mongodb+srv://jaharulalam1234:jaharulalam1234@cluster1.m3w4dg5.mongodb.net/?retryWrites=true&w=majority";
-// =====================================================================
+// MongoDB Connection
+const MONGO_URI = process.env.MONGO_URI;
+mongoose.connect(MONGO_URI)
+  .then(() => console.log("MongoDB Connected Successfully"))
+  .catch((err) => console.error("MongoDB Connection Error:", err));
 
-const client = new MongoClient(uri);
+// User Schema (Mobile Number Registration)
+const userSchema = new mongoose.Schema({
+  phone: { type: String, required: true, unique: true },
+  createdAt: { type: Date, default: Date.now }
+});
+const User = mongoose.model('User', userSchema);
 
-app.post('/register', async (req, res) => {
-    try {
-        await client.connect();
-        const database = client.db("Userdatabase");
-        const usersCollection = database.collection("user");
+// Message Schema
+const messageSchema = new mongoose.Schema({
+  sender: String,
+  receiver: String,
+  message: String,
+  timestamp: { type: Date, default: Date.now }
+});
+const Message = mongoose.model('Message', messageSchema);
 
-        const newUser = {
-            phone: req.body.phone,      // मोबाइल नंबर
-            createdAt: new Date()
-        };
+// API: Login / Register with Phone Number
+app.post('/api/login', async (req, res) => {
+  const { phone } = req.body;
+  if (!phone) return res.status(400).json({ error: "Mobile number is required" });
 
-        const result = await usersCollection.insertOne(newUser);
-
-        res.json({ 
-            success: true, 
-            message: "Number registered successfully",
-            insertedId: result.insertedId 
-        });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ 
-            success: false, 
-            message: "Server error while saving number" 
-        });
-    } finally {
-        // await client.close();   // Production में comment रख सकते हो
+  try {
+    let user = await User.findOne({ phone });
+    if (!user) {
+      user = new User({ phone });
+      await user.save();
     }
+    res.json({ success: true, user });
+  } catch (err) {
+    res.status(500).json({ error: "Server error" });
+  }
 });
 
-// Health check route
-app.get('/', (req, res) => {
-    res.send('Backend is running successfully!');
+// Real-Time Socket Connection
+io.on('connection', (socket) => {
+  socket.on('join', (phone) => {
+    socket.join(phone);
+  });
+
+  socket.on('send_message', async (data) => {
+    const { sender, receiver, message } = data;
+    const newMsg = new Message({ sender, receiver, message });
+    await newMsg.save();
+
+    io.to(receiver).emit('receive_message', newMsg);
+    io.to(sender).emit('receive_message', newMsg);
+  });
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+server.listen(5000, () => console.log("Server running on port 5000"));
