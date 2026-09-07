@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>चैट</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <span id="myPhone">मेरा नंबर</span>
+    </div>
+    <div class="user-list" id="userList">
+      <div class="loading">Loading...</div>
+    </div>
+  </aside>
+
+  <main class="chat-area">
+    <div class="chat-header" id="chatHeader">किसी नंबर पर क्लिक करें बात करने के लिए</div>
+    <div class="messages" id="messages"></div>
+    <form class="message-form" id="messageForm" style="display:none;">
+      <input type="text" id="messageInput" placeholder="मैसेज लिखें..." autocomplete="off" required>
+      <button type="submit">भेजें</button>
+    </form>
+  </main>
+</div>
+
+<script src="/chat.js"></script>
+</body>
+</html>
