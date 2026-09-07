@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>लॉगइन</title>
+<style>
+  body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f0f2f5; margin: 0; }
+  .login-container { background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 300px; }
+  .login-container h2 { text-align: center; margin-bottom: 20px; color: #333; }
+  .login-container input { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+  .login-container button { width: 100%; padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+  .login-container button:hover { background-color: #0056b3; }
+  .toggle-text { text-align: center; margin-top: 12px; font-size: 14px; color: #555; }
+  .toggle-text a { color: #007bff; cursor: pointer; text-decoration: none; }
+  .msg { text-align: center; font-size: 14px; margin-bottom: 10px; min-height: 18px; }
+  .msg.error { color: #d93025; }
+  .msg.success { color: #1e7e34; }
+</style>
+</head>
+<body>
+<div class="login-container">
+  <h2 id="formTitle">लॉगइन करें</h2>
+  <div class="msg" id="msgBox"></div>
+  <form id="authForm">
+    <input type="text" id="phone" placeholder="अपना नंबर दर्ज करें" required>
+    <input type="password" id="password" placeholder="पासवर्ड" required>
+    <button type="submit" id="submitBtn">लॉगइन</button>
+  </form>
+  <div class="toggle-text">
+    <span id="toggleMsg">नया अकाउंट बनाना है? <a id="toggleLink">रजिस्टर करें</a></span>
+  </div>
+</div>
+
+<script>
+  let mode = 'login'; // ya 'register'
+
+  const formTitle = document.getElementById('formTitle');
+  const submitBtn = document.getElementById('submitBtn');
+  const toggleMsg = document.getElementById('toggleMsg');
+  const toggleLink = document.getElementById('toggleLink');
+  const msgBox = document.getElementById('msgBox');
+  const authForm = document.getElementById('authForm');
+
+  function setMode(newMode) {
+    mode = newMode;
+    msgBox.textContent = '';
+    if (mode === 'login') {
+      formTitle.textContent = 'लॉगइन करें';
+      submitBtn.textContent = 'लॉगइन';
+      toggleMsg.innerHTML = 'नया अकाउंट बनाना है? <a id="toggleLink">रजिस्टर करें</a>';
+    } else {
+      formTitle.textContent = 'रजिस्टर करें';
+      submitBtn.textContent = 'रजिस्टर';
+      toggleMsg.innerHTML = 'पहले से अकाउंट है? <a id="toggleLink">लॉगइन करें</a>';
+    }
+    document.getElementById('toggleLink').addEventListener('click', () => setMode(mode === 'login' ? 'register' : 'login'));
+  }
+  toggleLink.addEventListener('click', () => setMode(mode === 'login' ? 'register' : 'login'));
+
+  authForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const phone = document.getElementById('phone').value.trim();
+    const password = document.getElementById('password').value;
+
+    msgBox.textContent = '';
+    msgBox.className = 'msg';
+    submitBtn.disabled = true;
+
+    try {
+      const endpoint = mode === 'login' ? '/api/login' : '/api/register';
+      const resp = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, password }),
+      });
+      const data = await resp.json();
+
+      if (data.success) {
+        if (mode === 'login') {
+          // Session ke liye sirf URL me phone pass karte hain — koi localStorage nahi
+          window.location.href = '/chat.html?phone=' + encodeURIComponent(data.phone);
+        } else {
+          msgBox.className = 'msg success';
+          msgBox.textContent = 'रजिस्ट्रेशन सफल! अब लॉगइन करें।';
+          setMode('login');
+        }
+      } else {
+        msgBox.className = 'msg error';
+        msgBox.textContent = data.message || 'कुछ गलत हो गया';
+      }
+    } catch (err) {
+      msgBox.className = 'msg error';
+      msgBox.textContent = 'Server se connect nahi ho paya';
+    } finally {
+      submitBtn.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>
