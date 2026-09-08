@@ -225,7 +225,12 @@
     function connectSocket() {
         if (socket) return;
         socket = io();
-        socket.emit('register', currentUser);
+
+        // Re-register on every connect AND every reconnect (fixes messages/typing
+        // silently stopping after a dropped connection until a hard refresh).
+        socket.on('connect', () => {
+            if (currentUser) socket.emit('register', currentUser.toLowerCase());
+        });
 
         socket.on('typing', ({ from }) => {
             if (activeChatUser && from === activeChatUser) {
@@ -452,6 +457,13 @@
                 <button class="danger delete-user-btn">Delete User</button>
             </div>
         `;
+        // Clicking anywhere on the row (except the kebab button/menu) opens a normal,
+        // fully interactive chat window so the admin can send/receive messages too.
+        chatItem.addEventListener('click', (e) => {
+            if (e.target.closest('.kebab-btn') || e.target.closest('.kebab-menu')) return;
+            openChatScreen(user.username, user.avatar);
+        });
+
         const kebabBtn = chatItem.querySelector('.kebab-btn');
         const menu = chatItem.querySelector('.kebab-menu');
         kebabBtn.addEventListener('click', (e) => {
@@ -512,7 +524,7 @@
     });
 
     function openChatScreen(username, avatar) {
-        activeChatUser = username;
+        activeChatUser = username.toLowerCase();
         document.getElementById('activeName').innerText = username;
         document.getElementById('activeStatus').innerText = 'online';
         const avatarEl = document.getElementById('activeAvatar');
