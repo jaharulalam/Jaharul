@@ -1,13 +1,1 @@
-{
-  "name": "whatsapp-clone",
-  "version": "1.0.0",
-  "description": "MongoDB-backed chat app (WhatsApp-style) deployable on Vercel",
-  "main": "index.js",
-  "scripts": {
-    "dev": "vercel dev"
-  },
-  "dependencies": {
-    "mongoose": "^8.5.1",
-    "bcryptjs": "^2.4.3"
-  }
-}
+.gitignore
