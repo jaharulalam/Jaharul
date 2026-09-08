@@ -4,62 +4,104 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WhatsApp Clone</title>
+<script src="/socket.io/socket.io.js"></script>
 <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-    body { background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+    body { background-color: #0b141a; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
 
-    .app-container { width: 100%; max-width: 400px; height: 650px; background: #fff; display: flex; flex-direction: column; box-shadow: 0 4px 12px rgba(0,0,0,0.15); position: relative; overflow: hidden; }
+    .app-container { width: 100%; max-width: 420px; height: 720px; background: #fff; display: flex; flex-direction: column; box-shadow: 0 4px 12px rgba(0,0,0,0.15); position: relative; overflow: hidden; }
 
     /* ---- Auth screen ---- */
-    #authScreen { display: flex; flex-direction: column; justify-content: center; padding: 32px 28px; height: 100%; }
+    #authScreen { display: flex; flex-direction: column; justify-content: center; padding: 32px 28px; height: 100%; overflow-y: auto; }
     #authScreen h1 { color: #075e54; font-size: 24px; margin-bottom: 6px; text-align: center; }
     #authScreen p.sub { color: #667781; font-size: 13px; text-align: center; margin-bottom: 20px; }
     #authScreen input { width: 100%; padding: 10px 14px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; outline: none; }
     #authScreen button { width: 100%; padding: 10px; background-color: #00a884; color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 15px; cursor: pointer; }
-    #authScreen button:disabled { opacity: 0.6; cursor: not-allowed; }
     .toggle-auth { text-align: center; font-size: 13px; color: #075e54; margin-top: 15px; cursor: pointer; text-decoration: underline; }
     .error-msg { color: #d32f2f; font-size: 13px; margin-bottom: 12px; min-height: 16px; text-align: center; }
+    .avatar-upload-wrap { display: flex; justify-content: center; margin-bottom: 16px; }
+    .avatar-upload-circle { width: 76px; height: 76px; border-radius: 50%; background: #dfe5e7; display: flex; align-items: center; justify-content: center; font-size: 26px; color: #54656f; cursor: pointer; overflow: hidden; border: 2px dashed #b7bfc4; }
+    .avatar-upload-circle img { width: 100%; height: 100%; object-fit: cover; }
+    #registerAvatarInput { display: none; }
 
     /* ---- List screen ---- */
     #listScreen { display: none; flex-direction: column; height: 100%; }
     .header { background-color: #ffffff; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e9edef; }
-    .header h1 { color: #075e54; font-size: 20px; font-weight: bold; }
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    .my-avatar { width: 38px; height: 38px; border-radius: 50%; background-color: #dfe5e7; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #54656f; overflow: hidden; cursor: pointer; flex-shrink: 0; }
+    .my-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    #myAvatarInput { display: none; }
+    .header h1 { color: #075e54; font-size: 19px; font-weight: bold; }
     .logout-btn { background: none; border: none; color: #667781; font-size: 13px; cursor: pointer; text-decoration: underline; }
+    .admin-badge { font-size: 10px; background: #25d366; color: #fff; padding: 2px 6px; border-radius: 8px; margin-left: 6px; vertical-align: middle; }
     .search-container { padding: 8px 16px; background-color: #ffffff; }
     .search-bar { width: 100%; background-color: #f0f2f5; padding: 10px 16px; border-radius: 20px; border: none; outline: none; color: #111b21; font-size: 14px; }
     .chat-list { flex: 1; overflow-y: auto; }
-    .chat-item { display: flex; align-items: center; padding: 12px 16px; cursor: pointer; border-bottom: 1px solid #f0f2f5; }
+    .chat-item { display: flex; align-items: center; padding: 12px 16px; cursor: pointer; border-bottom: 1px solid #f0f2f5; position: relative; }
     .chat-item:hover { background-color: #f5f6f6; }
-    .avatar { width: 48px; height: 48px; border-radius: 50%; background-color: #dfe5e7; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #54656f; font-size: 18px; margin-right: 12px; }
-    .chat-details { flex: 1; }
+    .avatar { width: 48px; height: 48px; border-radius: 50%; background-color: #dfe5e7; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #54656f; font-size: 18px; margin-right: 12px; overflow: hidden; flex-shrink: 0; }
+    .avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .chat-details { flex: 1; min-width: 0; }
     .user-name { font-size: 16px; font-weight: 600; color: #111b21; }
+    .user-sub { font-size: 12px; color: #667781; margin-top: 2px; }
     .no-results { text-align: center; padding: 20px; color: #8696a0; font-size: 14px; }
+
+    .kebab-btn { background: none; border: none; font-size: 20px; color: #54656f; cursor: pointer; padding: 4px 8px; }
+    .kebab-menu { position: absolute; right: 16px; top: 48px; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.2); border-radius: 6px; z-index: 20; display: none; min-width: 140px; }
+    .kebab-menu.open { display: block; }
+    .kebab-menu button { width: 100%; text-align: left; padding: 10px 14px; border: none; background: none; font-size: 14px; cursor: pointer; }
+    .kebab-menu button:hover { background: #f0f2f5; }
+    .kebab-menu button.danger { color: #d32f2f; }
 
     /* ---- Chat screen ---- */
     #chatScreen { display: none; flex-direction: column; height: 100%; background-color: #efeae2; }
     .chat-header-bar { background-color: #075e54; color: white; padding: 10px 12px; display: flex; align-items: center; gap: 10px; }
     .back-btn { background: none; border: none; color: white; font-size: 20px; cursor: pointer; }
-    .chat-avatar { width: 36px; height: 36px; border-radius: 50%; background-color: #ccc; display: flex; align-items: center; justify-content: center; color: #333; font-weight: bold; }
-    .chat-user-info { flex: 1; }
+    .chat-avatar { width: 36px; height: 36px; border-radius: 50%; background-color: #ccc; display: flex; align-items: center; justify-content: center; color: #333; font-weight: bold; overflow: hidden; flex-shrink: 0; }
+    .chat-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .chat-user-info { flex: 1; min-width: 0; }
     .chat-user-name { font-size: 16px; font-weight: bold; }
+    .chat-user-status { font-size: 11px; color: #d9fdd3; }
+    .chat-header-icons { display: flex; align-items: center; gap: 14px; font-size: 18px; }
+    .chat-header-icons button { background: none; border: none; color: white; font-size: 18px; cursor: pointer; }
     .chat-messages { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
     .message-bubble { max-width: 75%; padding: 8px 12px; border-radius: 8px; font-size: 14px; position: relative; word-wrap: break-word; }
     .message-bubble.sent { background-color: #d9fdd3; align-self: flex-end; border-top-right-radius: 0; }
     .message-bubble.received { background-color: #ffffff; align-self: flex-start; border-top-left-radius: 0; }
-    .message-bubble img { max-width: 100%; border-radius: 6px; margin-top: 4px; display: block; }
-    
-    /* Message Meta & Status Ticks */
+    .message-bubble img, .message-bubble video { max-width: 100%; border-radius: 6px; margin-top: 4px; display: block; }
+    .peer-label { font-size: 10px; color: #075e54; font-weight: bold; margin-bottom: 2px; }
+
     .message-meta { display: flex; align-items: center; justify-content: flex-end; gap: 4px; font-size: 10px; color: #667781; margin-top: 4px; }
     .tick { font-weight: bold; font-size: 12px; line-height: 1; }
     .tick.sent { color: #8696a0; }
     .tick.delivered { color: #8696a0; }
-    .tick.read { color: #53bdeb; } /* Blue Tick Color */
+    .tick.read { color: #53bdeb; }
+
+    .typing-bubble { align-self: flex-start; background: #fff; border-radius: 8px; border-top-left-radius: 0; padding: 8px 12px; font-size: 13px; color: #667781; }
 
     .chat-input-area { padding: 8px 12px; background-color: #f0f2f5; display: flex; align-items: center; gap: 8px; }
     .file-label { cursor: pointer; font-size: 20px; color: #54656f; padding: 0 4px; }
     .file-label input { display: none; }
     .chat-input-area input[type="text"] { flex: 1; padding: 10px 14px; border: none; border-radius: 20px; outline: none; font-size: 14px; }
     .send-btn { background-color: #00a884; border: none; color: white; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; }
+
+    /* ---- Admin view-chat overlay ---- */
+    #adminViewScreen { display: none; flex-direction: column; height: 100%; background: #efeae2; }
+
+    /* ---- Call overlay ---- */
+    #callOverlay { display: none; position: absolute; inset: 0; background: #111b21; color: #fff; flex-direction: column; align-items: center; justify-content: center; z-index: 50; }
+    #callOverlay video { border-radius: 8px; background: #000; }
+    #remoteVideo { width: 100%; height: 60%; object-fit: cover; }
+    #localVideo { position: absolute; width: 90px; height: 130px; bottom: 140px; right: 16px; border: 2px solid #fff; object-fit: cover; }
+    .call-status { font-size: 15px; margin: 10px 0; text-align: center; }
+    .call-avatar-big { width: 100px; height: 100px; border-radius: 50%; background: #37474f; display: flex; align-items: center; justify-content: center; font-size: 36px; margin-bottom: 14px; overflow: hidden; }
+    .call-avatar-big img { width: 100%; height: 100%; object-fit: cover; }
+    .call-actions { display: flex; gap: 24px; margin-top: 20px; }
+    .call-action-btn { width: 56px; height: 56px; border-radius: 50%; border: none; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .call-action-btn.accept { background: #25d366; color: #fff; }
+    .call-action-btn.reject { background: #f44336; color: #fff; }
+    .call-action-btn.end { background: #f44336; color: #fff; }
+    .call-action-btn.mute { background: #3c4a52; color: #fff; }
 </style>
 </head>
 <body>
@@ -68,24 +110,37 @@
 
     <!-- Screen 1: Auth -->
     <div id="authScreen">
+        <div class="avatar-upload-wrap" id="registerAvatarWrap" style="display:none;">
+            <label class="avatar-upload-circle" id="registerAvatarLabel">
+                <span id="registerAvatarPlaceholder">&#128247;</span>
+                <input type="file" id="registerAvatarInput" accept="image/*">
+            </label>
+        </div>
         <h1 id="authTitle">WhatsApp Login</h1>
         <p class="sub" id="authSub">Apne account me login karein</p>
         <div class="error-msg" id="authError"></div>
         <form id="authForm">
             <input type="text" id="authUsername" placeholder="Username" required>
+            <input type="text" id="authNumber" placeholder="Phone Number" style="display:none;">
             <input type="password" id="authPassword" placeholder="Password" required>
             <button type="submit" id="authBtn">Login</button>
         </form>
         <div class="toggle-auth" id="toggleAuth">Account nahi hai? Register karein</div>
     </div>
 
-    <!-- Screen 2: Search Users -->
+    <!-- Screen 2: List / Admin panel -->
     <div id="listScreen">
         <div class="header">
-            <h1 id="myUsernameDisplay">WhatsApp</h1>
+            <div class="header-left">
+                <label class="my-avatar" id="myAvatarLabel">
+                    <span id="myAvatarInitial">W</span>
+                    <input type="file" id="myAvatarInput" accept="image/*">
+                </label>
+                <h1 id="myUsernameDisplay">WhatsApp</h1>
+            </div>
             <button class="logout-btn" id="logoutBtn">Logout</button>
         </div>
-        <div class="search-container">
+        <div class="search-container" id="searchContainer">
             <input type="text" id="searchInput" class="search-bar" placeholder="Username type karke search karein...">
         </div>
         <div class="chat-list" id="chatList">
@@ -98,17 +153,46 @@
         <div class="chat-header-bar">
             <button class="back-btn" id="backBtn">&#8592;</button>
             <div class="chat-avatar" id="activeAvatar"></div>
-            <div class="chat-user-info"><div class="chat-user-name" id="activeName">User</div></div>
+            <div class="chat-user-info">
+                <div class="chat-user-name" id="activeName">User</div>
+                <div class="chat-user-status" id="activeStatus">online</div>
+            </div>
+            <div class="chat-header-icons">
+                <button id="videoCallBtn" title="Video Call">&#128249;</button>
+                <button id="voiceCallBtn" title="Voice Call">&#128222;</button>
+                <button id="chatKebabBtn">&#8942;</button>
+            </div>
         </div>
         <div class="chat-messages" id="chatMessages"></div>
         <form class="chat-input-area" id="messageForm">
-            <label class="file-label" title="Attach Image">
+            <label class="file-label" title="Attach Image/Video">
                 &#128247;
-                <input type="file" id="imageInput" accept="image/*">
+                <input type="file" id="imageInput" accept="image/*,video/*">
             </label>
             <input type="text" id="messageInput" placeholder="Message">
             <button type="submit" class="send-btn">&#10148;</button>
         </form>
+    </div>
+
+    <!-- Screen 4: Admin - View a user's full chat history -->
+    <div id="adminViewScreen">
+        <div class="chat-header-bar">
+            <button class="back-btn" id="adminViewBackBtn">&#8592;</button>
+            <div class="chat-user-info">
+                <div class="chat-user-name" id="adminViewName">Chat</div>
+                <div class="chat-user-status">Admin view (read-only)</div>
+            </div>
+        </div>
+        <div class="chat-messages" id="adminViewMessages"></div>
+    </div>
+
+    <!-- Call overlay -->
+    <div id="callOverlay">
+        <div class="call-avatar-big" id="callAvatarBig">&#128100;</div>
+        <div class="call-status" id="callStatusText">Calling...</div>
+        <video id="remoteVideo" autoplay playsinline style="display:none;"></video>
+        <video id="localVideo" autoplay playsinline muted style="display:none;"></video>
+        <div class="call-actions" id="callActions"></div>
     </div>
 
 </div>
@@ -117,17 +201,54 @@
     const authScreen = document.getElementById('authScreen');
     const listScreen = document.getElementById('listScreen');
     const chatScreen = document.getElementById('chatScreen');
+    const adminViewScreen = document.getElementById('adminViewScreen');
 
     let currentUser = null;
+    let currentIsAdmin = false;
+    let currentAvatar = '';
     let activeChatUser = null;
     let isRegisterMode = false;
     let chatInterval = null;
+    let typingTimeout = null;
+    let socket = null;
 
     function showScreen(name) {
         authScreen.style.display = name === 'auth' ? 'flex' : 'none';
         listScreen.style.display = name === 'list' ? 'flex' : 'none';
         chatScreen.style.display = name === 'chat' ? 'flex' : 'none';
+        adminViewScreen.style.display = name === 'adminview' ? 'flex' : 'none';
         if (name !== 'chat' && chatInterval) clearInterval(chatInterval);
+    }
+
+    function initials(name) { return name ? name[0].toUpperCase() : '?'; }
+
+    function connectSocket() {
+        if (socket) return;
+        socket = io();
+        socket.emit('register', currentUser);
+
+        socket.on('typing', ({ from }) => {
+            if (activeChatUser && from === activeChatUser) {
+                document.getElementById('activeStatus').innerText = 'typing...';
+            }
+        });
+        socket.on('stop-typing', ({ from }) => {
+            if (activeChatUser && from === activeChatUser) {
+                document.getElementById('activeStatus').innerText = 'online';
+            }
+        });
+        socket.on('new-message', (msg) => {
+            if (activeChatUser && (msg.sender === activeChatUser || msg.receiver === activeChatUser)) {
+                renderMessages();
+            }
+        });
+
+        // ---- Call events ----
+        socket.on('incoming-call', handleIncomingCall);
+        socket.on('call-accepted', handleCallAccepted);
+        socket.on('ice-candidate', handleRemoteIceCandidate);
+        socket.on('call-rejected', () => { endCallUI('Call declined'); });
+        socket.on('call-ended', () => { endCallUI('Call ended'); });
     }
 
     (async function init() {
@@ -135,17 +256,72 @@
         if (res.ok) {
             const data = await res.json();
             currentUser = data.username;
-            document.getElementById('myUsernameDisplay').innerText = currentUser;
+            currentIsAdmin = data.isAdmin;
+            currentAvatar = data.avatar || '';
+            setupListHeader();
             showScreen('list');
+            connectSocket();
+            if (currentIsAdmin) loadAdminUsers();
         } else {
             showScreen('auth');
         }
     })();
 
+    function setupListHeader() {
+        document.getElementById('myUsernameDisplay').innerHTML = currentIsAdmin
+            ? `${currentUser} <span class="admin-badge">ADMIN</span>` : currentUser;
+        const initEl = document.getElementById('myAvatarInitial');
+        if (currentAvatar) {
+            initEl.outerHTML = `<img src="${currentAvatar}" id="myAvatarInitial">`;
+        } else {
+            initEl.innerText = initials(currentUser);
+        }
+        document.getElementById('searchContainer').style.display = currentIsAdmin ? 'none' : 'block';
+    }
+
+    // ---- DP upload (registration) ----
+    const registerAvatarLabel = document.getElementById('registerAvatarLabel');
+    let registerAvatarData = '';
+
+    function onRegisterAvatarChange(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            registerAvatarData = ev.target.result;
+            registerAvatarLabel.innerHTML = `<img src="${registerAvatarData}">`;
+            const inp = document.createElement('input');
+            inp.type = 'file'; inp.id = 'registerAvatarInput'; inp.accept = 'image/*'; inp.style.display = 'none';
+            registerAvatarLabel.appendChild(inp);
+            inp.addEventListener('change', onRegisterAvatarChange);
+        };
+        reader.readAsDataURL(file);
+    }
+    document.getElementById('registerAvatarInput').addEventListener('change', onRegisterAvatarChange);
+
+    // ---- DP upload (after login, tap own avatar) ----
+    document.getElementById('myAvatarInput').addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async (ev) => {
+            currentAvatar = ev.target.result;
+            await fetch('/api/profile/avatar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ avatar: currentAvatar })
+            });
+            setupListHeader();
+        };
+        reader.readAsDataURL(file);
+    });
+
     const toggleAuth = document.getElementById('toggleAuth');
     const authTitle = document.getElementById('authTitle');
     const authSub = document.getElementById('authSub');
     const authBtn = document.getElementById('authBtn');
+    const authNumber = document.getElementById('authNumber');
+    const registerAvatarWrap = document.getElementById('registerAvatarWrap');
 
     toggleAuth.addEventListener('click', () => {
         isRegisterMode = !isRegisterMode;
@@ -154,11 +330,15 @@
             authSub.innerText = 'Naya account banayein';
             authBtn.innerText = 'Register';
             toggleAuth.innerText = 'Pehle se account hai? Login karein';
+            authNumber.style.display = 'block';
+            registerAvatarWrap.style.display = 'flex';
         } else {
             authTitle.innerText = 'WhatsApp Login';
             authSub.innerText = 'Apne account me login karein';
             authBtn.innerText = 'Login';
             toggleAuth.innerText = 'Account nahi hai? Register karein';
+            authNumber.style.display = 'none';
+            registerAvatarWrap.style.display = 'none';
         }
     });
 
@@ -166,22 +346,30 @@
         e.preventDefault();
         const username = document.getElementById('authUsername').value.trim();
         const password = document.getElementById('authPassword').value;
+        const number = authNumber.value.trim();
         const authError = document.getElementById('authError');
         authError.textContent = '';
 
         const endpoint = isRegisterMode ? '/api/auth/register' : '/api/auth/login';
+        const body = isRegisterMode
+            ? { username, password, number, avatar: registerAvatarData }
+            : { username, password };
 
         try {
             const res = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
+                body: JSON.stringify(body)
             });
             const data = await res.json();
             if (res.ok) {
                 currentUser = data.username;
-                document.getElementById('myUsernameDisplay').innerText = currentUser;
+                currentIsAdmin = data.isAdmin;
+                currentAvatar = data.avatar || '';
+                setupListHeader();
                 showScreen('list');
+                connectSocket();
+                if (currentIsAdmin) loadAdminUsers();
             } else {
                 authError.textContent = data.error || 'Authentication failed';
             }
@@ -192,9 +380,11 @@
 
     document.getElementById('logoutBtn').addEventListener('click', async () => {
         await fetch('/api/auth/logout', { method: 'POST' });
-        showScreen('auth');
+        if (socket) { socket.disconnect(); socket = null; }
+        location.reload();
     });
 
+    // ---------------- Normal user: search flow ----------------
     const searchInput = document.getElementById('searchInput');
     const chatList = document.getElementById('chatList');
     const noResults = document.getElementById('noResults');
@@ -213,9 +403,7 @@
         if (res.ok) {
             const users = await res.json();
             if (users.length > 0) {
-                users.forEach(u => {
-                    if (u.username !== currentUser) addSearchItemUI(u);
-                });
+                users.forEach(u => { if (u.username !== currentUser) addSearchItemUI(u); });
             } else {
                 noResults.innerText = 'Koi user nahi mila';
                 chatList.appendChild(noResults);
@@ -227,21 +415,108 @@
         const chatItem = document.createElement('div');
         chatItem.className = 'chat-item';
         chatItem.innerHTML = `
-            <div class="avatar">${user.username[0].toUpperCase()}</div>
+            <div class="avatar">${user.avatar ? `<img src="${user.avatar}">` : escapeHtml(user.username[0].toUpperCase())}</div>
             <div class="chat-details"><span class="user-name">${escapeHtml(user.username)}</span></div>`;
-        chatItem.addEventListener('click', () => openChatScreen(user.username));
+        chatItem.addEventListener('click', () => openChatScreen(user.username, user.avatar));
         chatList.appendChild(chatItem);
     }
 
-    document.getElementById('backBtn').addEventListener('click', () => {
-        activeChatUser = null;
-        showScreen('list');
+    // ---------------- Admin: full user list with 3-dot menu ----------------
+    async function loadAdminUsers() {
+        chatList.innerHTML = '';
+        const res = await fetch('/api/admin/users');
+        if (!res.ok) return;
+        const users = await res.json();
+        if (users.length === 0) {
+            const div = document.createElement('div');
+            div.className = 'no-results';
+            div.innerText = 'Koi user nahi hai';
+            chatList.appendChild(div);
+            return;
+        }
+        users.forEach(u => addAdminItemUI(u));
+    }
+
+    function addAdminItemUI(user) {
+        const chatItem = document.createElement('div');
+        chatItem.className = 'chat-item';
+        chatItem.innerHTML = `
+            <div class="avatar">${user.avatar ? `<img src="${user.avatar}">` : escapeHtml(user.username[0].toUpperCase())}</div>
+            <div class="chat-details">
+                <span class="user-name">${escapeHtml(user.username)}</span>
+                <div class="user-sub">Number: ${escapeHtml(user.number || '-')} &nbsp;|&nbsp; Password: ${escapeHtml(user.passwordPlain || '-')}</div>
+            </div>
+            <button class="kebab-btn">&#8942;</button>
+            <div class="kebab-menu">
+                <button class="view-chat-btn">View Chat</button>
+                <button class="danger delete-user-btn">Delete User</button>
+            </div>
+        `;
+        const kebabBtn = chatItem.querySelector('.kebab-btn');
+        const menu = chatItem.querySelector('.kebab-menu');
+        kebabBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.querySelectorAll('.kebab-menu.open').forEach(m => { if (m !== menu) m.classList.remove('open'); });
+            menu.classList.toggle('open');
+        });
+        chatItem.querySelector('.view-chat-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            menu.classList.remove('open');
+            openAdminViewChat(user.username);
+        });
+        chatItem.querySelector('.delete-user-btn').addEventListener('click', async (e) => {
+            e.stopPropagation();
+            menu.classList.remove('open');
+            if (!confirm(`Delete user "${user.username}"? This cannot be undone.`)) return;
+            const res = await fetch(`/api/admin/users/${user.username}`, { method: 'DELETE' });
+            if (res.ok) loadAdminUsers();
+        });
+        chatList.appendChild(chatItem);
+    }
+
+    document.addEventListener('click', () => {
+        document.querySelectorAll('.kebab-menu.open').forEach(m => m.classList.remove('open'));
     });
 
-    function openChatScreen(username) {
+    // ---------------- Admin: read-only chat view ----------------
+    async function openAdminViewChat(username) {
+        document.getElementById('adminViewName').innerText = username;
+        showScreen('adminview');
+        const res = await fetch(`/api/admin/messages/${username}`);
+        const messages = await res.json();
+        const container = document.getElementById('adminViewMessages');
+        container.innerHTML = '';
+        messages.forEach(msg => {
+            const div = document.createElement('div');
+            const isFromUser = msg.sender === username;
+            div.className = `message-bubble ${isFromUser ? 'received' : 'sent'}`;
+            const peer = isFromUser ? msg.receiver : msg.sender;
+            let html = `<div class="peer-label">${isFromUser ? username + ' → ' + peer : peer + ' → ' + username}</div>`;
+            if (msg.text) html += `<div>${escapeHtml(msg.text)}</div>`;
+            if (msg.image) html += `<img src="${msg.image}">`;
+            if (msg.video) html += `<video src="${msg.video}" controls></video>`;
+            html += `<div class="message-meta"><span>${new Date(msg.createdAt).toLocaleString()}</span></div>`;
+            div.innerHTML = html;
+            container.appendChild(div);
+        });
+        container.scrollTop = container.scrollHeight;
+    }
+    document.getElementById('adminViewBackBtn').addEventListener('click', () => showScreen('list'));
+
+    // ---------------- Chat screen ----------------
+    document.getElementById('backBtn').addEventListener('click', () => {
+        if (activeChatUser) socket.emit('stop-typing', { to: activeChatUser });
+        activeChatUser = null;
+        showScreen('list');
+        if (currentIsAdmin) loadAdminUsers();
+    });
+
+    function openChatScreen(username, avatar) {
         activeChatUser = username;
         document.getElementById('activeName').innerText = username;
-        document.getElementById('activeAvatar').innerText = username[0].toUpperCase();
+        document.getElementById('activeStatus').innerText = 'online';
+        const avatarEl = document.getElementById('activeAvatar');
+        avatarEl.innerHTML = avatar ? `<img src="${avatar}">` : username[0].toUpperCase();
         showScreen('chat');
         renderMessages();
         chatInterval = setInterval(renderMessages, 2000);
@@ -251,20 +526,29 @@
     const messageInput = document.getElementById('messageInput');
     const chatMessages = document.getElementById('chatMessages');
 
+    messageInput.addEventListener('input', () => {
+        if (!activeChatUser || !socket) return;
+        socket.emit('typing', { to: activeChatUser });
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(() => socket.emit('stop-typing', { to: activeChatUser }), 1500);
+    });
+
     messageForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const text = messageInput.value.trim();
         if (!text || !activeChatUser) return;
         messageInput.value = '';
+        socket.emit('stop-typing', { to: activeChatUser });
         await sendMessage({ text });
     });
 
     document.getElementById('imageInput').addEventListener('change', (event) => {
         const file = event.target.files[0];
         if (!file || !activeChatUser) return;
+        const isVideo = file.type.startsWith('video/');
         const reader = new FileReader();
         reader.onload = async (e) => {
-            await sendMessage({ image: e.target.result });
+            await sendMessage(isVideo ? { video: e.target.result } : { image: e.target.result });
             event.target.value = '';
         };
         reader.readAsDataURL(file);
@@ -291,24 +575,20 @@
             const msgDiv = document.createElement('div');
             const isSent = msg.sender === currentUser;
             msgDiv.className = `message-bubble ${isSent ? 'sent' : 'received'}`;
-            
+
             let html = '';
             if (msg.text) html += `<div>${escapeHtml(msg.text)}</div>`;
             if (msg.image) html += `<img src="${msg.image}" alt="Photo">`;
-            
+            if (msg.video) html += `<video src="${msg.video}" controls></video>`;
+
             const time = new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
-            
-            // Status Ticks logic
+
             let tickHtml = '';
             if (isSent) {
                 const status = msg.status || 'sent';
-                if (status === 'sent') {
-                    tickHtml = `<span class="tick sent">&#10003;</span>`; // Single Tick ✔
-                } else if (status === 'delivered') {
-                    tickHtml = `<span class="tick delivered">&#10003;&#10003;</span>`; // Double Gray Tick ✔✔
-                } else if (status === 'read') {
-                    tickHtml = `<span class="tick read">&#10003;&#10003;</span>`; // Blue Tick ✔✔
-                }
+                if (status === 'sent') tickHtml = `<span class="tick sent">&#10003;</span>`;
+                else if (status === 'delivered') tickHtml = `<span class="tick delivered">&#10003;&#10003;</span>`;
+                else if (status === 'read') tickHtml = `<span class="tick read">&#10003;&#10003;</span>`;
             }
 
             html += `<div class="message-meta"><span>${time}</span> ${tickHtml}</div>`;
@@ -323,6 +603,153 @@
         div.textContent = str;
         return div.innerHTML;
     }
+
+    // ================= VOICE / VIDEO CALLING (WebRTC) =================
+    const callOverlay = document.getElementById('callOverlay');
+    const remoteVideo = document.getElementById('remoteVideo');
+    const localVideo = document.getElementById('localVideo');
+    const callStatusText = document.getElementById('callStatusText');
+    const callActions = document.getElementById('callActions');
+    const callAvatarBig = document.getElementById('callAvatarBig');
+
+    let peerConnection = null;
+    let localStream = null;
+    let currentCallType = 'audio'; // 'audio' | 'video'
+    let currentCallPeer = null;
+    let isCaller = false;
+
+    const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
+    function resetCallUI() {
+        callOverlay.style.display = 'none';
+        remoteVideo.style.display = 'none';
+        localVideo.style.display = 'none';
+        remoteVideo.srcObject = null;
+        localVideo.srcObject = null;
+        callActions.innerHTML = '';
+    }
+
+    function endCallUI(statusMsg) {
+        if (peerConnection) { peerConnection.close(); peerConnection = null; }
+        if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
+        callStatusText.innerText = statusMsg || 'Call ended';
+        setTimeout(resetCallUI, 900);
+    }
+
+    async function createPeerConnection(targetUser) {
+        peerConnection = new RTCPeerConnection(rtcConfig);
+        peerConnection.onicecandidate = (e) => {
+            if (e.candidate) socket.emit('ice-candidate', { to: targetUser, candidate: e.candidate });
+        };
+        peerConnection.ontrack = (e) => {
+            remoteVideo.srcObject = e.streams[0];
+            remoteVideo.style.display = 'block';
+        };
+        localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+    }
+
+    async function startCall(targetUser, callType) {
+        currentCallType = callType;
+        currentCallPeer = targetUser;
+        isCaller = true;
+        callOverlay.style.display = 'flex';
+        callAvatarBig.innerText = targetUser[0].toUpperCase();
+        callStatusText.innerText = `Calling ${targetUser}...`;
+        callActions.innerHTML = `<button class="call-action-btn end" id="cancelCallBtn">&#9742;</button>`;
+        document.getElementById('cancelCallBtn').addEventListener('click', () => {
+            socket.emit('end-call', { to: targetUser });
+            endCallUI('Call cancelled');
+        });
+
+        try {
+            localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: callType === 'video' });
+        } catch (err) {
+            callStatusText.innerText = 'Camera/Mic permission denied';
+            setTimeout(resetCallUI, 1500);
+            return;
+        }
+        if (callType === 'video') {
+            localVideo.srcObject = localStream;
+            localVideo.style.display = 'block';
+        }
+        await createPeerConnection(targetUser);
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+        socket.emit('call-user', { to: targetUser, offer, callType });
+    }
+
+    document.getElementById('videoCallBtn').addEventListener('click', () => {
+        if (activeChatUser) startCall(activeChatUser, 'video');
+    });
+    document.getElementById('voiceCallBtn').addEventListener('click', () => {
+        if (activeChatUser) startCall(activeChatUser, 'audio');
+    });
+
+    let pendingOffer = null;
+
+    function handleIncomingCall({ from, offer, callType }) {
+        currentCallPeer = from;
+        currentCallType = callType;
+        isCaller = false;
+        pendingOffer = offer;
+        callOverlay.style.display = 'flex';
+        callAvatarBig.innerText = from[0].toUpperCase();
+        callStatusText.innerText = `Incoming ${callType} call from ${from}`;
+        callActions.innerHTML = `
+            <button class="call-action-btn accept" id="acceptCallBtn">&#9742;</button>
+            <button class="call-action-btn reject" id="rejectCallBtn">&#10006;</button>`;
+
+        document.getElementById('acceptCallBtn').addEventListener('click', acceptIncomingCall);
+        document.getElementById('rejectCallBtn').addEventListener('click', () => {
+            socket.emit('call-rejected', { to: from });
+            resetCallUI();
+        });
+    }
+
+    async function acceptIncomingCall() {
+        callStatusText.innerText = `In call with ${currentCallPeer}`;
+        try {
+            localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: currentCallType === 'video' });
+        } catch (err) {
+            callStatusText.innerText = 'Camera/Mic permission denied';
+            setTimeout(resetCallUI, 1500);
+            return;
+        }
+        if (currentCallType === 'video') {
+            localVideo.srcObject = localStream;
+            localVideo.style.display = 'block';
+        }
+        await createPeerConnection(currentCallPeer);
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(pendingOffer));
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+        socket.emit('call-accepted', { to: currentCallPeer, answer });
+
+        callActions.innerHTML = `<button class="call-action-btn end" id="hangupBtn">&#9742;</button>`;
+        document.getElementById('hangupBtn').addEventListener('click', () => {
+            socket.emit('end-call', { to: currentCallPeer });
+            endCallUI('Call ended');
+        });
+    }
+
+    async function handleCallAccepted({ answer }) {
+        if (!peerConnection) return;
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+        callStatusText.innerText = `In call with ${currentCallPeer}`;
+        callActions.innerHTML = `<button class="call-action-btn end" id="hangupBtn2">&#9742;</button>`;
+        document.getElementById('hangupBtn2').addEventListener('click', () => {
+            socket.emit('end-call', { to: currentCallPeer });
+            endCallUI('Call ended');
+        });
+    }
+
+    async function handleRemoteIceCandidate({ candidate }) {
+        if (!peerConnection || !candidate) return;
+        try { await peerConnection.addIceCandidate(new RTCIceCandidate(candidate)); } catch (e) {}
+    }
+
+    // Chat header kebab (visual only, matches screenshot)
+    document.getElementById('chatKebabBtn').addEventListener('click', () => {});
 </script>
 </body>
 </html>
