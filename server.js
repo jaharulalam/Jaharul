@@ -26,6 +26,7 @@ const messageSchema = new mongoose.Schema({
     receiver: { type: String, required: true },
     text: { type: String, default: '' },
     image: { type: String, default: '' },
+    status: { type: String, enum: ['sent', 'delivered', 'read'], default: 'sent' }, // Status Field Added
     createdAt: { type: Date, default: Date.now }
 });
 
@@ -45,20 +46,14 @@ const authenticateToken = (req, res, next) => {
 };
 
 // --- AUTH ROUTES ---
-
-// 1. Register Route
 app.post('/api/auth/register', async (req, res) => {
     try {
         const { username, password } = req.body;
-        if (!username || !password) {
-            return res.status(400).json({ error: 'Username aur Password zaroori hain' });
-        }
+        if (!username || !password) return res.status(400).json({ error: 'Username aur Password zaroori hain' });
 
         const cleanUsername = username.trim().toLowerCase();
         const existingUser = await User.findOne({ username: cleanUsername });
-        if (existingUser) {
-            return res.status(400).json({ error: 'Yeh username pehle se मौजूद hai' });
-        }
+        if (existingUser) return res.status(400).json({ error: 'Yeh username pehle se maujood hai' });
 
         const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = new User({ username: cleanUsername, password: hashedPassword });
@@ -72,21 +67,16 @@ app.post('/api/auth/register', async (req, res) => {
     }
 });
 
-// 2. Login Route
 app.post('/api/auth/login', async (req, res) => {
     try {
         const { username, password } = req.body;
         const cleanUsername = username.trim().toLowerCase();
 
         const user = await User.findOne({ username: cleanUsername });
-        if (!user) {
-            return res.status(400).json({ error: 'Invalid username or password' });
-        }
+        if (!user) return res.status(400).json({ error: 'Invalid username or password' });
 
         const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(400).json({ error: 'Invalid username or password' });
-        }
+        if (!isMatch) return res.status(400).json({ error: 'Invalid username or password' });
 
         const token = jwt.sign({ username: cleanUsername }, JWT_SECRET, { expiresIn: '7d' });
         res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'lax' });
@@ -96,12 +86,10 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
-// 3. Current User Route
 app.get('/api/auth/me', authenticateToken, (req, res) => {
     res.json({ username: req.user.username });
 });
 
-// 4. Logout Route
 app.post('/api/auth/logout', (req, res) => {
     res.clearCookie('token');
     res.json({ message: 'Logged out' });
@@ -123,11 +111,17 @@ app.get('/api/users/search', authenticateToken, async (req, res) => {
 
 // --- CHAT ROUTES ---
 
-// Get Messages
+// Get Messages & Mark Received Messages as Read
 app.get('/api/messages/:targetUser', authenticateToken, async (req, res) => {
     try {
         const current = req.user.username;
         const target = req.params.targetUser.toLowerCase();
+
+        // Mark incoming messages as read
+        await Message.updateMany(
+            { sender: target, receiver: current, status: { $ne: 'read' } },
+            { $set: { status: 'read' } }
+        );
 
         const messages = await Message.find({
             $or: [
@@ -153,7 +147,8 @@ app.post('/api/messages/:targetUser', authenticateToken, async (req, res) => {
             sender: current,
             receiver: target,
             text: text || '',
-            image: image || ''
+            image: image || '',
+            status: 'sent'
         });
 
         await newMsg.save();
@@ -163,7 +158,7 @@ app.post('/api/messages/:targetUser', authenticateToken, async (req, res) => {
     }
 });
 
-// Database connection & Server start
+// Database Connection & Server Start
 if (MONGODB_URI) {
     mongoose.connect(MONGODB_URI)
         .then(() => console.log('Connected to MongoDB'))
