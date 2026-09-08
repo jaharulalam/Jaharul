@@ -47,7 +47,14 @@
     .message-bubble.sent { background-color: #d9fdd3; align-self: flex-end; border-top-right-radius: 0; }
     .message-bubble.received { background-color: #ffffff; align-self: flex-start; border-top-left-radius: 0; }
     .message-bubble img { max-width: 100%; border-radius: 6px; margin-top: 4px; display: block; }
-    .message-time { font-size: 10px; color: #667781; text-align: right; margin-top: 4px; }
+    
+    /* Message Meta & Status Ticks */
+    .message-meta { display: flex; align-items: center; justify-content: flex-end; gap: 4px; font-size: 10px; color: #667781; margin-top: 4px; }
+    .tick { font-weight: bold; font-size: 12px; line-height: 1; }
+    .tick.sent { color: #8696a0; }
+    .tick.delivered { color: #8696a0; }
+    .tick.read { color: #53bdeb; } /* Blue Tick Color */
+
     .chat-input-area { padding: 8px 12px; background-color: #f0f2f5; display: flex; align-items: center; gap: 8px; }
     .file-label { cursor: pointer; font-size: 20px; color: #54656f; padding: 0 4px; }
     .file-label input { display: none; }
@@ -59,7 +66,7 @@
 
 <div class="app-container">
 
-    <!-- ===== Screen 1: Login / Register ===== -->
+    <!-- Screen 1: Auth -->
     <div id="authScreen">
         <h1 id="authTitle">WhatsApp Login</h1>
         <p class="sub" id="authSub">Apne account me login karein</p>
@@ -72,32 +79,28 @@
         <div class="toggle-auth" id="toggleAuth">Account nahi hai? Register karein</div>
     </div>
 
-    <!-- ===== Screen 2: Search Users ===== -->
+    <!-- Screen 2: Search Users -->
     <div id="listScreen">
         <div class="header">
             <h1 id="myUsernameDisplay">WhatsApp</h1>
             <button class="logout-btn" id="logoutBtn">Logout</button>
         </div>
-
         <div class="search-container">
             <input type="text" id="searchInput" class="search-bar" placeholder="Username type karke search karein...">
         </div>
-
         <div class="chat-list" id="chatList">
             <div class="no-results" id="noResults">Search bar me username type karein</div>
         </div>
     </div>
 
-    <!-- ===== Screen 3: Chat Screen ===== -->
+    <!-- Screen 3: Chat -->
     <div id="chatScreen">
         <div class="chat-header-bar">
             <button class="back-btn" id="backBtn">&#8592;</button>
             <div class="chat-avatar" id="activeAvatar"></div>
             <div class="chat-user-info"><div class="chat-user-name" id="activeName">User</div></div>
         </div>
-
         <div class="chat-messages" id="chatMessages"></div>
-
         <form class="chat-input-area" id="messageForm">
             <label class="file-label" title="Attach Image">
                 &#128247;
@@ -139,7 +142,6 @@
         }
     })();
 
-    // Auth Toggle
     const toggleAuth = document.getElementById('toggleAuth');
     const authTitle = document.getElementById('authTitle');
     const authSub = document.getElementById('authSub');
@@ -193,7 +195,6 @@
         showScreen('auth');
     });
 
-    // Search Users
     const searchInput = document.getElementById('searchInput');
     const chatList = document.getElementById('chatList');
     const noResults = document.getElementById('noResults');
@@ -232,7 +233,6 @@
         chatList.appendChild(chatItem);
     }
 
-    // Chat
     document.getElementById('backBtn').addEventListener('click', () => {
         activeChatUser = null;
         showScreen('list');
@@ -244,7 +244,7 @@
         document.getElementById('activeAvatar').innerText = username[0].toUpperCase();
         showScreen('chat');
         renderMessages();
-        chatInterval = setInterval(renderMessages, 3000); // Poll messages every 3s
+        chatInterval = setInterval(renderMessages, 2000);
     }
 
     const messageForm = document.getElementById('messageForm');
@@ -291,11 +291,27 @@
             const msgDiv = document.createElement('div');
             const isSent = msg.sender === currentUser;
             msgDiv.className = `message-bubble ${isSent ? 'sent' : 'received'}`;
+            
             let html = '';
             if (msg.text) html += `<div>${escapeHtml(msg.text)}</div>`;
             if (msg.image) html += `<img src="${msg.image}" alt="Photo">`;
+            
             const time = new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
-            html += `<div class="message-time">${time}</div>`;
+            
+            // Status Ticks logic
+            let tickHtml = '';
+            if (isSent) {
+                const status = msg.status || 'sent';
+                if (status === 'sent') {
+                    tickHtml = `<span class="tick sent">&#10003;</span>`; // Single Tick ✔
+                } else if (status === 'delivered') {
+                    tickHtml = `<span class="tick delivered">&#10003;&#10003;</span>`; // Double Gray Tick ✔✔
+                } else if (status === 'read') {
+                    tickHtml = `<span class="tick read">&#10003;&#10003;</span>`; // Blue Tick ✔✔
+                }
+            }
+
+            html += `<div class="message-meta"><span>${time}</span> ${tickHtml}</div>`;
             msgDiv.innerHTML = html;
             chatMessages.appendChild(msgDiv);
         });
