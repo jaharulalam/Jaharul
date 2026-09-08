@@ -18,6 +18,8 @@
     #loginScreen button { width: 100%; padding: 10px; background-color: #00a884; color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 15px; cursor: pointer; }
     #loginScreen button:disabled { opacity: 0.6; cursor: not-allowed; }
     .error-msg { color: #d32f2f; font-size: 13px; margin-bottom: 12px; min-height: 16px; text-align: center; }
+    .toggle-link { text-align: center; font-size: 13px; color: #667781; margin-top: 4px; }
+    .toggle-link a { color: #00a884; font-weight: bold; text-decoration: none; cursor: pointer; }
 
     /* ---- List screen ---- */
     #listScreen { display: none; flex-direction: column; height: 100%; }
@@ -76,6 +78,20 @@
             <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password" required>
             <button type="submit" id="loginBtn">Login</button>
         </form>
+        <p class="toggle-link">Naya user hain? <a id="showRegister">Register karein</a></p>
+    </div>
+
+    <!-- ===== Screen 1b: Register ===== -->
+    <div id="registerScreen" style="display:none; flex-direction: column; justify-content: center; padding: 32px 28px; height: 100%;">
+        <h1>WhatsApp</h1>
+        <p class="sub">Naya account banayein</p>
+        <div class="error-msg" id="registerError"></div>
+        <form id="registerForm">
+            <input type="text" id="registerUsername" placeholder="Username (kam se kam 3 characters)" autocomplete="username" required>
+            <input type="password" id="registerPassword" placeholder="Password (kam se kam 6 characters)" autocomplete="new-password" required>
+            <button type="submit" id="registerBtn">Register</button>
+        </form>
+        <p class="toggle-link">Pehle se account hai? <a id="showLogin">Login karein</a></p>
     </div>
 
     <!-- ===== Screen 2: Contact list ===== -->
@@ -126,6 +142,7 @@
 <script>
     // ---------- Screen elements ----------
     const loginScreen = document.getElementById('loginScreen');
+    const registerScreen = document.getElementById('registerScreen');
     const listScreen = document.getElementById('listScreen');
     const chatScreen = document.getElementById('chatScreen');
 
@@ -134,9 +151,13 @@
 
     function showScreen(name) {
         loginScreen.style.display = name === 'login' ? 'flex' : 'none';
+        registerScreen.style.display = name === 'register' ? 'flex' : 'none';
         listScreen.style.display = name === 'list' ? 'flex' : 'none';
         chatScreen.style.display = name === 'chat' ? 'flex' : 'none';
     }
+
+    document.getElementById('showRegister').addEventListener('click', () => showScreen('register'));
+    document.getElementById('showLogin').addEventListener('click', () => showScreen('login'));
 
     // ---------- Boot: check if already logged in ----------
     (async function init() {
@@ -181,6 +202,41 @@
         } finally {
             loginBtn.disabled = false;
             loginBtn.textContent = 'Login';
+        }
+    });
+
+    const registerForm = document.getElementById('registerForm');
+    const registerError = document.getElementById('registerError');
+    const registerBtn = document.getElementById('registerBtn');
+
+    registerForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        registerError.textContent = '';
+        registerBtn.disabled = true;
+        registerBtn.textContent = 'Registering...';
+
+        const username = document.getElementById('registerUsername').value.trim();
+        const password = document.getElementById('registerPassword').value;
+
+        try {
+            const res = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                registerForm.reset();
+                showScreen('list');
+                loadContacts();
+            } else {
+                registerError.textContent = data.error || 'Registration failed';
+            }
+        } catch {
+            registerError.textContent = 'Network error. Please try again.';
+        } finally {
+            registerBtn.disabled = false;
+            registerBtn.textContent = 'Register';
         }
     });
 
