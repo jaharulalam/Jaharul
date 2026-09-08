@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WhatsApp Clone</title>
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+
+    .app-container { width: 100%; max-width: 400px; height: 650px; background: #fff; display: flex; flex-direction: column; box-shadow: 0 4px 12px rgba(0,0,0,0.15); position: relative; overflow: hidden; }
+
+    /* ---- Login screen ---- */
+    #loginScreen { display: flex; flex-direction: column; justify-content: center; padding: 32px 28px; height: 100%; }
+    #loginScreen h1 { color: #075e54; font-size: 24px; margin-bottom: 6px; text-align: center; }
+    #loginScreen p.sub { color: #667781; font-size: 13px; text-align: center; margin-bottom: 20px; }
+    #loginScreen input { width: 100%; padding: 10px 14px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; outline: none; }
+    #loginScreen button { width: 100%; padding: 10px; background-color: #00a884; color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 15px; cursor: pointer; }
+    #loginScreen button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .error-msg { color: #d32f2f; font-size: 13px; margin-bottom: 12px; min-height: 16px; text-align: center; }
+
+    /* ---- List screen ---- */
+    #listScreen { display: none; flex-direction: column; height: 100%; }
+    .header { background-color: #ffffff; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; }
+    .header h1 { color: #075e54; font-size: 22px; font-weight: bold; }
+    .logout-btn { background: none; border: none; color: #667781; font-size: 13px; cursor: pointer; text-decoration: underline; }
+    .search-container { padding: 8px 16px; background-color: #ffffff; }
+    .search-bar { width: 100%; background-color: #f0f2f5; padding: 10px 16px; border-radius: 20px; border: none; outline: none; color: #111b21; font-size: 14px; }
+    .add-user-form { padding: 12px 16px; background: #fff; border-bottom: 1px solid #e9edef; display: flex; flex-direction: column; gap: 8px; }
+    .add-user-form input { padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; outline: none; }
+    .add-user-form button { padding: 8px; background-color: #00a884; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    .add-user-form button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .form-msg { font-size: 12px; min-height: 14px; }
+    .form-msg.error { color: #d32f2f; }
+    .form-msg.success { color: #075e54; }
+    .chat-list { flex: 1; overflow-y: auto; }
+    .chat-item { display: flex; align-items: center; padding: 12px 16px; cursor: pointer; border-bottom: 1px solid #f0f2f5; }
+    .chat-item:hover { background-color: #f5f6f6; }
+    .avatar { width: 48px; height: 48px; border-radius: 50%; background-color: #dfe5e7; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #54656f; font-size: 18px; margin-right: 12px; }
+    .chat-details { flex: 1; }
+    .chat-header { display: flex; justify-content: space-between; align-items: center; }
+    .user-name { font-size: 16px; font-weight: 600; color: #111b21; }
+    .chat-time { font-size: 12px; color: #667781; }
+    .no-results { text-align: center; padding: 20px; color: #8696a0; font-size: 14px; }
+
+    /* ---- Chat screen ---- */
+    #chatScreen { display: none; flex-direction: column; height: 100%; background-color: #efeae2; }
+    .chat-header-bar { background-color: #075e54; color: white; padding: 10px 12px; display: flex; align-items: center; gap: 10px; }
+    .back-btn { background: none; border: none; color: white; font-size: 20px; cursor: pointer; }
+    .chat-avatar { width: 36px; height: 36px; border-radius: 50%; background-color: #ccc; display: flex; align-items: center; justify-content: center; color: #333; font-weight: bold; }
+    .chat-user-info { flex: 1; }
+    .chat-user-name { font-size: 16px; font-weight: bold; }
+    .chat-messages { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+    .message-bubble { max-width: 75%; padding: 8px 12px; border-radius: 8px; font-size: 14px; position: relative; word-wrap: break-word; }
+    .message-bubble.sent { background-color: #d9fdd3; align-self: flex-end; border-top-right-radius: 0; }
+    .message-bubble img { max-width: 100%; border-radius: 6px; margin-top: 4px; display: block; }
+    .message-time { font-size: 10px; color: #667781; text-align: right; margin-top: 4px; }
+    .chat-input-area { padding: 8px 12px; background-color: #f0f2f5; display: flex; align-items: center; gap: 8px; }
+    .file-label { cursor: pointer; font-size: 20px; color: #54656f; padding: 0 4px; }
+    .file-label input { display: none; }
+    .chat-input-area input[type="text"] { flex: 1; padding: 10px 14px; border: none; border-radius: 20px; outline: none; font-size: 14px; }
+    .send-btn { background-color: #00a884; border: none; color: white; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; }
+</style>
+</head>
+<body>
+
+<div class="app-container">
+
+    <!-- ===== Screen 1: Login ===== -->
+    <div id="loginScreen">
+        <h1>WhatsApp</h1>
+        <p class="sub">Apne account me login karein</p>
+        <div class="error-msg" id="loginError"></div>
+        <form id="loginForm">
+            <input type="text" id="loginUsername" placeholder="Username" autocomplete="username" required>
+            <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password" required>
+            <button type="submit" id="loginBtn">Login</button>
+        </form>
+    </div>
+
+    <!-- ===== Screen 2: Contact list ===== -->
+    <div id="listScreen">
+        <div class="header">
+            <h1>WhatsApp</h1>
+            <button class="logout-btn" id="logoutBtn">Logout</button>
+        </div>
+
+        <div class="search-container">
+            <input type="text" id="searchInput" class="search-bar" placeholder="Pura naam likhkar search karein...">
+        </div>
+
+        <form class="add-user-form" id="contactForm">
+            <input type="text" id="contactName" placeholder="Name" required>
+            <input type="tel" id="contactMobile" placeholder="Phone Number" pattern="[0-9]{10}" required>
+            <button type="submit" id="saveBtn">Save Contact</button>
+            <div class="form-msg" id="formMsg"></div>
+        </form>
+
+        <div class="chat-list" id="chatList">
+            <div class="no-results" id="noResults">Search bar me pura naam type karein</div>
+        </div>
+    </div>
+
+    <!-- ===== Screen 3: Individual chat ===== -->
+    <div id="chatScreen">
+        <div class="chat-header-bar">
+            <button class="back-btn" id="backBtn">&#8592;</button>
+            <div class="chat-avatar" id="activeAvatar"></div>
+            <div class="chat-user-info"><div class="chat-user-name" id="activeName">User</div></div>
+        </div>
+
+        <div class="chat-messages" id="chatMessages"></div>
+
+        <form class="chat-input-area" id="messageForm">
+            <label class="file-label" title="Attach Image">
+                &#128247;
+                <input type="file" id="imageInput" accept="image/*">
+            </label>
+            <input type="text" id="messageInput" placeholder="Message">
+            <button type="submit" class="send-btn">&#10148;</button>
+        </form>
+    </div>
+
+</div>
+
+<script>
+    // ---------- Screen elements ----------
+    const loginScreen = document.getElementById('loginScreen');
+    const listScreen = document.getElementById('listScreen');
+    const chatScreen = document.getElementById('chatScreen');
+
+    let allContacts = [];
+    let currentActiveUser = null;
+
+    function showScreen(name) {
+        loginScreen.style.display = name === 'login' ? 'flex' : 'none';
+        listScreen.style.display = name === 'list' ? 'flex' : 'none';
+        chatScreen.style.display = name === 'chat' ? 'flex' : 'none';
+    }
+
+    // ---------- Boot: check if already logged in ----------
+    (async function init() {
+        const res = await fetch('/api/auth/me');
+        if (res.ok) {
+            showScreen('list');
+            loadContacts();
+        } else {
+            showScreen('login');
+        }
+    })();
+
+    // ---------- Login ----------
+    const loginForm = document.getElementById('loginForm');
+    const loginError = document.getElementById('loginError');
+    const loginBtn = document.getElementById('loginBtn');
+
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        loginError.textContent = '';
+        loginBtn.disabled = true;
+        loginBtn.textContent = 'Logging in...';
+
+        const username = document.getElementById('loginUsername').value.trim();
+        const password = document.getElementById('loginPassword').value;
+
+        try {
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                showScreen('list');
+                loadContacts();
+            } else {
+                loginError.textContent = data.error || 'Login failed';
+            }
+        } catch {
+            loginError.textContent = 'Network error. Please try again.';
+        } finally {
+            loginBtn.disabled = false;
+            loginBtn.textContent = 'Login';
+        }
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+        await fetch('/api/auth/logout', { method: 'POST' });
+        showScreen('login');
+    });
+
+    // ---------- Contacts ----------
+    async function loadContacts() {
+        const res = await fetch('/api/contacts');
+        if (res.status === 401) return showScreen('login');
+        allContacts = await res.json();
+    }
+
+    const contactForm = document.getElementById('contactForm');
+    const saveBtn = document.getElementById('saveBtn');
+    const formMsg = document.getElementById('formMsg');
+
+    contactForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        formMsg.textContent = '';
+        formMsg.className = 'form-msg';
+
+        const name = document.getElementById('contactName').value.trim();
+        const number = document.getElementById('contactMobile').value.trim();
+
+        saveBtn.disabled = true;
+        try {
+            const res = await fetch('/api/contacts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, number })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                allContacts.unshift(data);
+                formMsg.textContent = 'Contact save ho gaya hai! Search bar me pura naam likhne par hi dikhega.';
+                formMsg.className = 'form-msg success';
+                contactForm.reset();
+                handleSearch();
+            } else {
+                formMsg.textContent = data.error || 'Contact save nahi ho paaya';
+                formMsg.className = 'form-msg error';
+            }
+        } catch {
+            formMsg.textContent = 'Network error. Please try again.';
+            formMsg.className = 'form-msg error';
+        } finally {
+            saveBtn.disabled = false;
+        }
+    });
+
+    const searchInput = document.getElementById('searchInput');
+    const chatList = document.getElementById('chatList');
+    const noResults = document.getElementById('noResults');
+
+    searchInput.addEventListener('input', handleSearch);
+
+    function handleSearch() {
+        const query = searchInput.value.trim().toLowerCase();
+        chatList.innerHTML = '';
+
+        if (!query) {
+            noResults.innerText = 'Search bar me pura naam type karein';
+            chatList.appendChild(noResults);
+            return;
+        }
+
+        const matched = allContacts.filter(c => c.name.toLowerCase() === query);
+        if (matched.length > 0) {
+            matched.forEach(addChatToUI);
+        } else {
+            noResults.innerText = 'Koi contact nahi mila';
+            chatList.appendChild(noResults);
+        }
+    }
+
+    function addChatToUI(contact) {
+        const initials = contact.name.substring(0, 2).toUpperCase();
+        const time = new Date(contact.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+
+        const chatItem = document.createElement('div');
+        chatItem.className = 'chat-item';
+        chatItem.innerHTML = `
+            <div class="avatar">${initials}</div>
+            <div class="chat-details">
+                <div class="chat-header">
+                    <span class="user-name">${escapeHtml(contact.name)}</span>
+                    <span class="chat-time">${time}</span>
+                </div>
+            </div>`;
+        chatItem.addEventListener('click', () => openChatScreen(contact));
+        chatList.appendChild(chatItem);
+    }
+
+    // ---------- Chat ----------
+    document.getElementById('backBtn').addEventListener('click', () => {
+        currentActiveUser = null;
+        showScreen('list');
+    });
+
+    async function openChatScreen(contact) {
+        currentActiveUser = contact;
+        document.getElementById('activeName').innerText = contact.name;
+        document.getElementById('activeAvatar').innerText = contact.name[0].toUpperCase();
+        showScreen('chat');
+        await renderMessages();
+    }
+
+    const messageForm = document.getElementById('messageForm');
+    const messageInput = document.getElementById('messageInput');
+    const chatMessages = document.getElementById('chatMessages');
+
+    messageForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const text = messageInput.value.trim();
+        if (!text || !currentActiveUser) return;
+        messageInput.value = '';
+        await sendMessage({ text });
+    });
+
+    document.getElementById('imageInput').addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (!file || !currentActiveUser) return;
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            await sendMessage({ image: e.target.result });
+            event.target.value = '';
+        };
+        reader.readAsDataURL(file);
+    });
+
+    async function sendMessage(payload) {
+        const res = await fetch(`/api/messages/${currentActiveUser._id}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if (res.status === 401) return showScreen('login');
+        await renderMessages();
+    }
+
+    async function renderMessages() {
+        if (!currentActiveUser) return;
+        const res = await fetch(`/api/messages/${currentActiveUser._id}`);
+        if (res.status === 401) return showScreen('login');
+        const messages = await res.json();
+
+        chatMessages.innerHTML = '';
+        messages.forEach(msg => {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message-bubble ${msg.type}`;
+            let html = '';
+            if (msg.text) html += `<div>${escapeHtml(msg.text)}</div>`;
+            if (msg.image) html += `<img src="${msg.image}" alt="Photo">`;
+            const time = new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+            html += `<div class="message-time">${time}</div>`;
+            msgDiv.innerHTML = html;
+            chatMessages.appendChild(msgDiv);
+        });
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+</script>
+
+</body>
+</html>
