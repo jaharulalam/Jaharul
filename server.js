@@ -158,12 +158,24 @@ app.post('/api/profile/avatar', authenticateToken, async (req, res) => {
 });
 
 // ---------------- USER SEARCH ----------------
+function escapeRegex(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 app.get('/api/users/search', authenticateToken, async (req, res) => {
     try {
-        const query = req.query.q || '';
+        const rawQuery = (req.query.q || '').trim();
+        const currentUsername = req.user.username.toLowerCase();
+        const safeQuery = escapeRegex(rawQuery);
+
         const users = await User.find({
-            username: { $regex: query, $options: 'i', $ne: req.user.username }
-        }).select('username avatar -_id');
+            $and: [
+                { username: { $regex: safeQuery, $options: 'i' } },
+                { username: { $ne: currentUsername } },
+                { isAdmin: { $ne: true } } // admin account is not a regular chat contact
+            ]
+        }).select('username avatar -_id').lean();
+
         res.json(users);
     } catch (err) {
         res.status(500).json({ error: 'Search failed' });
@@ -209,7 +221,7 @@ app.get('/api/admin/messages/:username', authenticateToken, requireAdmin, async 
 // ---------------- CHAT ROUTES ----------------
 app.get('/api/messages/:targetUser', authenticateToken, async (req, res) => {
     try {
-        const current = req.user.username;
+        const current = req.user.username.toLowerCase();
         const target = req.params.targetUser.toLowerCase();
 
         await Message.updateMany(
@@ -232,7 +244,7 @@ app.get('/api/messages/:targetUser', authenticateToken, async (req, res) => {
 
 app.post('/api/messages/:targetUser', authenticateToken, async (req, res) => {
     try {
-        const current = req.user.username;
+        const current = req.user.username.toLowerCase();
         const target = req.params.targetUser.toLowerCase();
         const { text, image, video } = req.body;
 
@@ -247,8 +259,9 @@ app.post('/api/messages/:targetUser', authenticateToken, async (req, res) => {
 
         await newMsg.save();
 
-        // Realtime push to receiver if online
+        // Realtime push to both sides (receiver gets it live; sender's other tabs/devices sync too)
         io.to(target).emit('new-message', newMsg);
+        io.to(current).emit('new-message', newMsg);
 
         res.json(newMsg);
     } catch (err) {
@@ -263,40 +276,44 @@ io.on('connection', (socket) => {
 
     socket.on('register', (username) => {
         if (!username) return;
-        boundUser = username.toLowerCase();
+        boundUser = String(username).trim().toLowerCase();
+        // Leave any stale room from a previous register call on this same socket
+        socket.rooms.forEach(room => { if (room !== socket.id) socket.leave(room); });
         socket.join(boundUser);
     });
+
+    const norm = (s) => (s ? String(s).trim().toLowerCase() : s);
 
     // Typing indicator
     socket.on('typing', ({ to }) => {
         if (!boundUser || !to) return;
-        io.to(to).emit('typing', { from: boundUser });
+        io.to(norm(to)).emit('typing', { from: boundUser });
     });
 
     socket.on('stop-typing', ({ to }) => {
         if (!boundUser || !to) return;
-        io.to(to).emit('stop-typing', { from: boundUser });
+        io.to(norm(to)).emit('stop-typing', { from: boundUser });
     });
 
     // WebRTC call signaling
     socket.on('call-user', ({ to, offer, callType }) => {
-        io.to(to).emit('incoming-call', { from: boundUser, offer, callType });
+        io.to(norm(to)).emit('incoming-call', { from: boundUser, offer, callType });
     });
 
     socket.on('call-accepted', ({ to, answer }) => {
-        io.to(to).emit('call-accepted', { from: boundUser, answer });
+        io.to(norm(to)).emit('call-accepted', { from: boundUser, answer });
     });
 
     socket.on('ice-candidate', ({ to, candidate }) => {
-        io.to(to).emit('ice-candidate', { from: boundUser, candidate });
+        io.to(norm(to)).emit('ice-candidate', { from: boundUser, candidate });
     });
 
     socket.on('call-rejected', ({ to }) => {
-        io.to(to).emit('call-rejected', { from: boundUser });
+        io.to(norm(to)).emit('call-rejected', { from: boundUser });
     });
 
     socket.on('end-call', ({ to }) => {
-        io.to(to).emit('call-ended', { from: boundUser });
+        io.to(norm(to)).emit('call-ended', { from: boundUser });
     });
 
     socket.on('disconnect', () => {
