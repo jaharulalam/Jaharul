@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path');
 
 const app = express();
 app.use(cors());
@@ -18,6 +19,11 @@ const DataSchema = new mongoose.Schema({
     date: { type: Date, default: Date.now }
 });
 const DataModel = mongoose.model('Data', DataSchema);
+
+// रूट राउट जो index.html को सर्व करेगा
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
 
 app.post('/api/data', async (req, res) => {
     try {
