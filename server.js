@@ -13,24 +13,25 @@ const io = new Server(server, { cors: { origin: '*' } });
 
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_key';
-const MONGODB_URI = process.env.MONGODB_URI;
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://jaharula20_db_user:jhsjM9UPiyflzxeh@cluster0.e5v95rf.mongodb.net/chatapp?appName=Cluster0';
 
-// Admin credentials (fixed ID as requested)
+// Fixed Admin credentials
 const ADMIN_USERNAME = 'jaharul';
 const ADMIN_PASSWORD = 'admin';
 
 // Middleware
-app.use(express.json({ limit: '25mb' })); // higher limit to allow video/image uploads
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ---------------- MongoDB Models ----------------
+// ---------------- MongoDB Schemas ----------------
 const userSchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true, lowercase: true, trim: true },
-    number: { type: String, default: '' },          // phone number
-    password: { type: String, required: true },       // bcrypt hash (used for login)
-    passwordPlain: { type: String, default: '' },      // plain copy, admin-visible only
-    avatar: { type: String, default: '' },             // base64 DP
+    number: { type: String, default: '' },
+    password: { type: String, required: true },
+    passwordPlain: { type: String, default: '' },
+    avatar: { type: String, default: '' },
     isAdmin: { type: Boolean, default: false }
 });
 
@@ -47,7 +48,7 @@ const messageSchema = new mongoose.Schema({
 const User = mongoose.model('User', userSchema);
 const Message = mongoose.model('Message', messageSchema);
 
-// Seed the fixed admin account on startup
+// Admin Seeding
 async function seedAdmin() {
     try {
         const existing = await User.findOne({ username: ADMIN_USERNAME });
@@ -60,14 +61,14 @@ async function seedAdmin() {
                 passwordPlain: ADMIN_PASSWORD,
                 isAdmin: true
             });
-            console.log('Admin account created:', ADMIN_USERNAME);
+            console.log('Admin account initialized:', ADMIN_USERNAME);
         }
     } catch (e) {
         console.error('Admin seed error:', e);
     }
 }
 
-// ---------------- Auth Middleware ----------------
+// ---------------- Auth Middlewares ----------------
 const authenticateToken = (req, res, next) => {
     const token = req.cookies.token;
     if (!token) return res.status(401).json({ error: 'Unauthorized' });
@@ -85,18 +86,17 @@ const requireAdmin = async (req, res, next) => {
     next();
 };
 
-// ---------------- AUTH ROUTES ----------------
+// ---------------- Auth Routes ----------------
 app.post('/api/auth/register', async (req, res) => {
     try {
         const { username, password, number, avatar } = req.body;
-        if (!username || !password) return res.status(400).json({ error: 'Username aur Password zaroori hain' });
+        if (!username || !password) return res.status(400).json({ error: 'Username and Password required' });
 
         const cleanUsername = username.trim().toLowerCase();
-        if (cleanUsername === ADMIN_USERNAME) {
-            return res.status(400).json({ error: 'Yeh username reserved hai' });
-        }
+        if (cleanUsername === ADMIN_USERNAME) return res.status(400).json({ error: 'Reserved username' });
+
         const existingUser = await User.findOne({ username: cleanUsername });
-        if (existingUser) return res.status(400).json({ error: 'Yeh username pehle se maujood hai' });
+        if (existingUser) return res.status(400).json({ error: 'Username already exists' });
 
         const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = new User({
@@ -122,10 +122,10 @@ app.post('/api/auth/login', async (req, res) => {
         const cleanUsername = username.trim().toLowerCase();
 
         const user = await User.findOne({ username: cleanUsername });
-        if (!user) return res.status(400).json({ error: 'Invalid username or password' });
+        if (!user) return res.status(400).json({ error: 'Invalid credentials' });
 
         const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(400).json({ error: 'Invalid username or password' });
+        if (!isMatch) return res.status(400).json({ error: 'Invalid credentials' });
 
         const token = jwt.sign({ username: cleanUsername }, JWT_SECRET, { expiresIn: '7d' });
         res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'lax' });
@@ -146,79 +146,7 @@ app.post('/api/auth/logout', (req, res) => {
     res.json({ message: 'Logged out' });
 });
 
-// ---------------- PROFILE (DP) ----------------
-app.post('/api/profile/avatar', authenticateToken, async (req, res) => {
-    try {
-        const { avatar } = req.body;
-        await User.updateOne({ username: req.user.username }, { $set: { avatar: avatar || '' } });
-        res.json({ message: 'Avatar updated' });
-    } catch (err) {
-        res.status(500).json({ error: 'Failed to update avatar' });
-    }
-});
-
-// ---------------- USER SEARCH ----------------
-function escapeRegex(str) {
-    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-app.get('/api/users/search', authenticateToken, async (req, res) => {
-    try {
-        const rawQuery = (req.query.q || '').trim();
-        const currentUsername = req.user.username.toLowerCase();
-        const safeQuery = escapeRegex(rawQuery);
-
-        const users = await User.find({
-            $and: [
-                { username: { $regex: safeQuery, $options: 'i' } },
-                { username: { $ne: currentUsername } },
-                { isAdmin: { $ne: true } } // admin account is not a regular chat contact
-            ]
-        }).select('username avatar -_id').lean();
-
-        res.json(users);
-    } catch (err) {
-        res.status(500).json({ error: 'Search failed' });
-    }
-});
-
-// ---------------- ADMIN ROUTES ----------------
-// List every user with number + plaintext password
-app.get('/api/admin/users', authenticateToken, requireAdmin, async (req, res) => {
-    try {
-        const users = await User.find({ username: { $ne: req.user.username } })
-            .select('username number passwordPlain avatar -_id');
-        res.json(users);
-    } catch (err) {
-        res.status(500).json({ error: 'Failed to load users' });
-    }
-});
-
-// Delete a user (and their messages)
-app.delete('/api/admin/users/:username', authenticateToken, requireAdmin, async (req, res) => {
-    try {
-        const target = req.params.username.toLowerCase();
-        await User.deleteOne({ username: target });
-        await Message.deleteMany({ $or: [{ sender: target }, { receiver: target }] });
-        res.json({ message: 'User deleted' });
-    } catch (err) {
-        res.status(500).json({ error: 'Failed to delete user' });
-    }
-});
-
-// View all messages involving a particular user (admin oversight)
-app.get('/api/admin/messages/:username', authenticateToken, requireAdmin, async (req, res) => {
-    try {
-        const target = req.params.username.toLowerCase();
-        const messages = await Message.find({ $or: [{ sender: target }, { receiver: target }] })
-            .sort({ createdAt: 1 });
-        res.json(messages);
-    } catch (err) {
-        res.status(500).json({ error: 'Failed to load chat' });
-    }
-});
-
-// ---------------- CHAT ROUTES ----------------
+// ---------------- Chat & Messages Routes ----------------
 app.get('/api/messages/:targetUser', authenticateToken, async (req, res) => {
     try {
         const current = req.user.username.toLowerCase();
@@ -259,7 +187,6 @@ app.post('/api/messages/:targetUser', authenticateToken, async (req, res) => {
 
         await newMsg.save();
 
-        // Realtime push to both sides (receiver gets it live; sender's other tabs/devices sync too)
         io.to(target).emit('new-message', newMsg);
         io.to(current).emit('new-message', newMsg);
 
@@ -269,22 +196,19 @@ app.post('/api/messages/:targetUser', authenticateToken, async (req, res) => {
     }
 });
 
-// ---------------- SOCKET.IO: presence, typing, calls ----------------
-// Map username -> socket.id (also join a room named after username)
+// ---------------- Realtime Socket.IO ----------------
 io.on('connection', (socket) => {
     let boundUser = null;
 
     socket.on('register', (username) => {
         if (!username) return;
         boundUser = String(username).trim().toLowerCase();
-        // Leave any stale room from a previous register call on this same socket
         socket.rooms.forEach(room => { if (room !== socket.id) socket.leave(room); });
         socket.join(boundUser);
     });
 
     const norm = (s) => (s ? String(s).trim().toLowerCase() : s);
 
-    // Typing indicator
     socket.on('typing', ({ to }) => {
         if (!boundUser || !to) return;
         io.to(norm(to)).emit('typing', { from: boundUser });
@@ -295,7 +219,6 @@ io.on('connection', (socket) => {
         io.to(norm(to)).emit('stop-typing', { from: boundUser });
     });
 
-    // WebRTC call signaling
     socket.on('call-user', ({ to, offer, callType }) => {
         io.to(norm(to)).emit('incoming-call', { from: boundUser, offer, callType });
     });
@@ -315,22 +238,13 @@ io.on('connection', (socket) => {
     socket.on('end-call', ({ to }) => {
         io.to(norm(to)).emit('call-ended', { from: boundUser });
     });
-
-    socket.on('disconnect', () => {
-        // no persistent presence tracking needed for this simple app
-    });
 });
 
-// ---------------- Database Connection & Server Start ----------------
-if (MONGODB_URI) {
-    mongoose.connect(MONGODB_URI)
-        .then(() => {
-            console.log('Connected to MongoDB');
-            seedAdmin();
-        })
-        .catch(err => console.error('MongoDB connection error:', err));
-}
-
-server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+// Start Server
+mongoose.connect(MONGODB_URI)
+    .then(() => {
+        console.log('Connected to MongoDB Atlas');
+        seedAdmin();
+        server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+    })
+    .catch(err => console.error('MongoDB connection error:', err));
