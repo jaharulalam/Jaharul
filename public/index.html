@@ -18,14 +18,14 @@
         top: 86px; /* Is value ko kam-zyada karke sirf text box ko upar-neeche karein */
         left: 50%;
         transform: translateX(-50%);
-        width: 25%;
+        width: 30%;
         background-color: #fff3cd;
         border: 1px solid #ffeeba;
         color: #000000;
-        padding: 8px;
-        border-radius: 8px;
+        padding: -5px;
+        border-radius: 10px;
         text-align: center;
-        font-size: 6px;
+        font-size: 10px;
         font-weight: bold;
         z-index: 10;
     }
@@ -53,13 +53,13 @@
     /* ===== YouTube card ===== */
     .youtube-card {
         text-align: center;
-        margin-top: 0px;
+        margin-top: -5px;
         margin-left: 0px;
         margin-right: 0px;
         margin-bottom: 0px;
     }
     .youtube-photo {
-        width: 100px;
+        width: 110px;
         height: auto;
         border-radius: 10px;
         display: block;
@@ -87,14 +87,14 @@
     /* ===== Vidmate card ===== */
     .vidmate-card {
         text-align: center;
-        margin-top: 0px;
+        margin-top: 2px;
         margin-left: 0px;
         margin-right: 0px;
         margin-bottom: 0px;
     }
     .vidmate-photo {
         width: 86px;
-        height: auto;
+        height: 80px;
         border-radius: 10px;
         display: block;
         margin: 0 auto 10px;
@@ -155,19 +155,70 @@
     /* ===== Capcut card ===== */
     .capcut-card {
         text-align: center;
-        margin-top: -150px;
+        margin-top: -160px;
         margin-left: 0px;
         margin-right: 0px;
         margin-bottom: 0px;
     }
     .capcut-photo {
+        width: 120px;
+        height: auto;
+        border-radius: 20px;
+        display: block;
+        margin: 0 auto 10px;
+    }
+    .btn-capcut { background-color: #000000; }
+
+    /* ===== Netflix card ===== */
+    .netflix-card {
+        text-align: center;
+        margin-top: 0px;
+        margin-left: 0px;
+        margin-right: 0px;
+        margin-bottom: 0px;
+    }
+    .netflix-photo {
         width: 100px;
         height: auto;
         border-radius: 10px;
         display: block;
         margin: 0 auto 10px;
     }
-    .btn-capcut { background-color: #000000; }
+    .btn-netflix { background-color: #E50914; }
+
+    /* ===== Truecaller card ===== */
+    .truecaller-card {
+        text-align: center;
+        margin-top: -180px;
+        margin-left: 0px;
+        margin-right: -5px;
+        margin-bottom: 0px;
+    }
+    .truecaller-photo {
+        width: 126px;
+        height: auto;
+        border-radius: 10px;
+        display: block;
+        margin: 0 auto 10px;
+    }
+    .btn-truecaller { background-color: #0087FF; }
+
+    /* ===== MX Player card ===== */
+    .mxplayer-card {
+        text-align: center;
+        margin-top: -130px;
+        margin-left: 230px;
+        margin-right: 0px;
+        margin-bottom: 0px;
+    }
+    .mxplayer-photo {
+        width: 100px;
+        height: auto;
+        border-radius: 10px;
+        display: block;
+        margin: 0 auto 10px;
+    }
+    .btn-mxplayer { background-color: #00A8FF; }
 </style>
 </head>
 <body>
@@ -184,7 +235,7 @@
                  src="https://raw.githubusercontent.com/jaharulalam/Jaharul/42a6ca77e0ce7ffae6388f68f278044166b8c8f1/youtube.jpg"
                  alt="YouTube Photo">
             <a class="btn btn-youtube"
-               href="https://github.com/jaharulalam/Jaharul/releases/download/V25/DOC-20261001-WA0002.apk">
+               href="https://github.com/jaharulalam/Jaharul/releases/download/V25/youtube.premium.apk">
                YouTube Download</a>
         </div>
 
@@ -204,7 +255,7 @@
                  src="https://raw.githubusercontent.com/jaharulalam/Jaharul/refs/heads/main/Vidmate.jpg"
                  alt="Vidmate Photo">
             <a class="btn btn-vidmate"
-               href="https://github.com/jaharulalam/Jaharul/releases/download/V25/vidmate.apk">
+               href="https://github.com/jaharulalam/Jaharul/releases/download/V25/vidmate.premium.apk">
                Vidmate Download</a>
         </div>
 
@@ -214,7 +265,7 @@
                  src="https://raw.githubusercontent.com/jaharulalam/Jaharul/refs/heads/main/Supervpn.jpg"
                  alt="Super VPN Photo">
             <a class="btn btn-supervpn"
-               href="https://github.com/jaharulalam/Jaharul/releases/download/V25/super.vpn.apk">
+               href="https://github.com/jaharulalam/Jaharul/releases/download/V25/super.vpn.premium.apk">
                Super VPN Download</a>
         </div>
 
@@ -224,7 +275,7 @@
                  src="https://raw.githubusercontent.com/jaharulalam/Jaharul/refs/heads/main/Remini.jpg"
                  alt="Remini Photo">
             <a class="btn btn-remini"
-               href="https://github.com/jaharulalam/Jaharul/releases/download/V25/Remini.apk">
+               href="https://github.com/jaharulalam/Jaharul/releases/download/V25/Remini.premium.apk">
                Remini Download</a>
         </div>
 
@@ -234,7 +285,7 @@
                  src="https://raw.githubusercontent.com/jaharulalam/Jaharul/refs/heads/main/Picsart.jpg"
                  alt="Picsart Photo">
             <a class="btn btn-picsart"
-               href="https://github.com/jaharulalam/Jaharul/releases/download/V25/picsart.V30.apk">
+               href="https://github.com/jaharulalam/Jaharul/releases/download/V25/picsart.premium.apk">
                Picsart Download</a>
         </div>
 
@@ -244,8 +295,38 @@
                  src="https://raw.githubusercontent.com/jaharulalam/Jaharul/refs/heads/main/Capcut.jpg"
                  alt="Capcut Photo">
             <a class="btn btn-capcut"
-               href="https://github.com/jaharulalam/Jaharul/releases/download/V25/Capcut.apk">
+               href="https://github.com/jaharulalam/Jaharul/releases/download/V25/Capcut.pro.apk">
                Capcut Download</a>
+        </div>
+
+        <!-- Netflix: photo + button -->
+        <div class="netflix-card">
+            <img class="netflix-photo"
+                 src="https://raw.githubusercontent.com/jaharulalam/Jaharul/refs/heads/main/Netflix%20premium.jpg"
+                 alt="Netflix Photo">
+            <a class="btn btn-netflix"
+               href="https://github.com/jaharulalam/Jaharul/releases/download/V25/Netflix.premium.apk">
+               Netflix Download</a>
+        </div>
+
+        <!-- Truecaller: photo + button -->
+        <div class="truecaller-card">
+            <img class="truecaller-photo"
+                 src="https://raw.githubusercontent.com/jaharulalam/Jaharul/refs/heads/main/Truecaller%20premium.png"
+                 alt="Truecaller Photo">
+            <a class="btn btn-truecaller"
+               href="https://github.com/jaharulalam/Jaharul/releases/download/V25/Truecaller.premium.apk">
+               Truecaller Download</a>
+        </div>
+
+        <!-- MX Player: photo + button -->
+        <div class="mxplayer-card">
+            <img class="mxplayer-photo"
+                 src="https://raw.githubusercontent.com/jaharulalam/Jaharul/refs/heads/main/Mx%20player.jpg"
+                 alt="MX Player Photo">
+            <a class="btn btn-mxplayer"
+               href="#">
+               MX Player Download</a>
         </div>
 
     </div>
