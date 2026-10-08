@@ -4,11 +4,12 @@ const cors = require('cors');
 const path = require('path');
 
 const app = express();
+
 app.use(cors());
 app.use(express.json());
 
-// आपकी MongoDB कनेक्शन स्ट्रिंग
-const mongoURI = 'mongodb+srv://jaharula20_db_user:jhsjM9UPiyflzxeh@cluster0.e5v95rf.mongodb.net/chatapp?appName=Cluster0';
+// Environmental variable se URL lene ke liye (security ke liye)
+const mongoURI = process.env.MONGO_URI || 'mongodb+srv://jaharula20_db_user:jhsjM9UPiyflzxeh@cluster0.e5v95rf.mongodb.net/chatapp?appName=Cluster0';
 
 mongoose.connect(mongoURI)
   .then(() => console.log('MongoDB successfully connected'))
@@ -20,11 +21,15 @@ const DataSchema = new mongoose.Schema({
 });
 const DataModel = mongoose.model('Data', DataSchema);
 
-// रूट राउट जो index.html को सर्व करेगा
+// Static files ko serve karne ke liye
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Root route index.html serve karne ke liye
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// API endpoint
 app.post('/api/data', async (req, res) => {
     try {
         const newData = new DataModel(req.body);
@@ -35,5 +40,11 @@ app.post('/api/data', async (req, res) => {
     }
 });
 
+// Local development ke liye port listen
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}
+
+// Vercel serverless deployment ke liye export karna zaroori hai
+module.exports = app;
